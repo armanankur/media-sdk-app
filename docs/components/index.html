@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>media-ui-react — Component Docs</title>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --border: #2a2d3a;
+      --primary: #6366f1;
+      --primary-light: #818cf8;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --code-bg: #12151f;
+      --green: #34d399;
+      --red: #f87171;
+      --yellow: #fbbf24;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+    }
+
+    a { color: var(--primary-light); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .layout { display: flex; min-height: 100vh; }
+
+    /* Sidebar */
+    .sidebar {
+      width: 260px;
+      flex-shrink: 0;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: 24px 0;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+    }
+
+    .sidebar-logo {
+      padding: 0 24px 24px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 16px;
+    }
+
+    .sidebar-logo h1 { font-size: 18px; font-weight: 700; color: var(--text); }
+    .sidebar-logo span { font-size: 12px; color: var(--muted); }
+
+    .nav-section {
+      padding: 8px 24px 4px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--muted);
+      margin-top: 8px;
+    }
+
+    .nav-link {
+      display: block;
+      padding: 7px 24px;
+      font-size: 14px;
+      color: var(--muted);
+      transition: all 0.15s;
+      border-left: 2px solid transparent;
+    }
+
+    .nav-link:hover {
+      color: var(--text);
+      background: rgba(99,102,241,0.06);
+      text-decoration: none;
+      border-left-color: var(--primary);
+    }
+
+    /* Main */
+    .main {
+      flex: 1;
+      max-width: 860px;
+      padding: 48px 56px;
+      overflow-x: hidden;
+    }
+
+    .section { margin-bottom: 64px; }
+
+    h2 {
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: -0.4px;
+      margin-bottom: 12px;
+      padding-top: 8px;
+    }
+
+    h3 {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text);
+      margin: 28px 0 10px;
+    }
+
+    h4 {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--primary-light);
+      margin: 20px 0 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    p { color: var(--muted); margin-bottom: 14px; font-size: 15px; }
+
+    ul { padding-left: 20px; color: var(--muted); font-size: 15px; }
+    li { margin-bottom: 6px; }
+
+    /* Hero */
+    .hero {
+      background: linear-gradient(135deg, rgba(99,102,241,0.12), rgba(139,92,246,0.06));
+      border: 1px solid rgba(99,102,241,0.25);
+      border-radius: 16px;
+      padding: 40px;
+      margin-bottom: 48px;
+    }
+
+    .hero h1 {
+      font-size: 36px;
+      font-weight: 800;
+      letter-spacing: -0.8px;
+      background: linear-gradient(135deg, #fff, #818cf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 12px;
+    }
+
+    .hero p { font-size: 16px; color: #94a3b8; margin-bottom: 24px; }
+
+    .badges { display: flex; gap: 10px; flex-wrap: wrap; }
+    .badge {
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 500;
+      border: 1px solid;
+    }
+    .badge-blue { background: rgba(99,102,241,0.15); border-color: rgba(99,102,241,0.4); color: #a5b4fc; }
+    .badge-green { background: rgba(52,211,153,0.1); border-color: rgba(52,211,153,0.3); color: #6ee7b7; }
+    .badge-yellow { background: rgba(251,191,36,0.1); border-color: rgba(251,191,36,0.3); color: #fde68a; }
+
+    /* Code */
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px 24px;
+      overflow-x: auto;
+      margin: 12px 0 20px;
+      font-size: 13.5px;
+      line-height: 1.6;
+    }
+
+    code {
+      font-family: "JetBrains Mono", "Fira Code", monospace;
+      color: #c4b5fd;
+    }
+
+    p code, li code {
+      background: rgba(99,102,241,0.12);
+      border: 1px solid rgba(99,102,241,0.2);
+      border-radius: 4px;
+      padding: 1px 6px;
+      font-size: 13px;
+      color: #a5b4fc;
+    }
+
+    .kw { color: #f472b6; }
+    .str { color: #86efac; }
+    .fn { color: #60a5fa; }
+    .comment { color: #475569; font-style: italic; }
+    .type { color: #fbbf24; }
+    .tag { color: #f472b6; }
+    .attr { color: #60a5fa; }
+    .val { color: #86efac; }
+
+    /* Tables */
+    table { width: 100%; border-collapse: collapse; margin: 16px 0 24px; font-size: 14px; }
+    th {
+      text-align: left;
+      padding: 10px 14px;
+      background: var(--surface);
+      color: var(--muted);
+      font-weight: 600;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid var(--border);
+    }
+    td {
+      padding: 10px 14px;
+      border-bottom: 1px solid rgba(42,45,58,0.6);
+      color: var(--muted);
+      vertical-align: top;
+    }
+    td:first-child { color: var(--text); font-family: monospace; font-size: 13px; }
+    tr:last-child td { border-bottom: none; }
+
+    /* Component header */
+    .component-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+
+    .component-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+
+    .icon-grid { background: rgba(99,102,241,0.15); border: 1px solid rgba(99,102,241,0.3); }
+    .icon-lightbox { background: rgba(52,211,153,0.1); border: 1px solid rgba(52,211,153,0.3); }
+    .icon-reel { background: rgba(251,191,36,0.1); border: 1px solid rgba(251,191,36,0.3); }
+
+    /* Callout */
+    .callout {
+      background: rgba(99,102,241,0.08);
+      border: 1px solid rgba(99,102,241,0.2);
+      border-left: 3px solid var(--primary);
+      border-radius: 8px;
+      padding: 14px 18px;
+      margin: 16px 0;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .callout strong { color: var(--primary-light); }
+
+    .callout-warn {
+      background: rgba(251,191,36,0.06);
+      border-color: rgba(251,191,36,0.2);
+      border-left-color: var(--yellow);
+    }
+
+    .callout-warn strong { color: var(--yellow); }
+
+    /* Req/opt */
+    .req { color: var(--green); font-size: 12px; font-weight: 600; }
+    .opt { color: var(--muted); font-size: 12px; }
+
+    hr { border: none; border-top: 1px solid var(--border); margin: 48px 0; }
+
+    /* Prop getter box */
+    .getter-list {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px 20px;
+      margin: 12px 0 20px;
+    }
+
+    .getter-item {
+      display: flex;
+      gap: 12px;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(42,45,58,0.5);
+      font-size: 13.5px;
+    }
+
+    .getter-item:last-child { border-bottom: none; }
+    .getter-name { color: #60a5fa; font-family: monospace; min-width: 220px; }
+    .getter-desc { color: var(--muted); }
+
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .main { padding: 24px 20px; }
+      .hero { padding: 24px; }
+      .hero h1 { font-size: 26px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="sidebar-logo">
+      <h1>media-ui-react</h1>
+      <span>Headless Component Library</span>
+    </div>
+
+    <div class="nav-section">Overview</div>
+    <a class="nav-link" href="#intro">Introduction</a>
+    <a class="nav-link" href="#headless">Headless Pattern</a>
+    <a class="nav-link" href="#install">Installation</a>
+
+    <div class="nav-section">Components</div>
+    <a class="nav-link" href="#grid">Grid</a>
+    <a class="nav-link" href="#lightbox">Lightbox</a>
+    <a class="nav-link" href="#reel">ReelSwiper</a>
+
+    <div class="nav-section">Hooks</div>
+    <a class="nav-link" href="#usegrid">useGrid</a>
+    <a class="nav-link" href="#uselightbox">useLightbox</a>
+
+    <div class="nav-section">Resources</div>
+    <a class="nav-link" href="https://github.com/armanankur/media-sdk-app" target="_blank">GitHub ↗</a>
+    <a class="nav-link" href="https://media-sdk-app-web-app.vercel.app" target="_blank">Live App ↗</a>
+  </nav>
+
+  <!-- Main -->
+  <main class="main">
+
+    <!-- Hero -->
+    <div class="hero">
+      <h1>media-ui-react</h1>
+      <p>A headless React component library for building media UIs. Ships behaviour, not styles — you own every pixel.</p>
+      <div class="badges">
+        <span class="badge badge-blue">Headless</span>
+        <span class="badge badge-green">Prop Getters</span>
+        <span class="badge badge-yellow">Zero Styles</span>
+      </div>
+    </div>
+
+    <!-- Intro -->
+    <div class="section" id="intro">
+      <h2>Introduction</h2>
+      <p><code>media-ui-react</code> provides three fully headless components — <strong>Grid</strong>, <strong>Lightbox</strong>, and <strong>ReelSwiper</strong>. They handle all behaviour: pagination, navigation, keyboard events, scroll detection, video autoplay. You supply the markup and CSS.</p>
+
+      <div class="callout">
+        <strong>Independent by design.</strong> This package has zero imports from <code>media-core</code> or <code>media-react</code>. Components receive data and callbacks purely as props — they don't know Pexels or the SDK exist.
+      </div>
+    </div>
+
+    <!-- Headless Pattern -->
+    <div class="section" id="headless">
+      <h2>Headless Pattern</h2>
+      <p>Components expose <strong>prop-getter functions</strong> that return the correct event handlers, aria attributes, and roles. Spread them onto your own elements:</p>
+
+      <pre><code><span class="comment">// The component gives you prop-getters:</span>
+<span class="kw">const</span> { getContainerProps, getItemProps, getLoadMoreProps } = <span class="fn">useGrid</span>({ items });
+
+<span class="comment">// You spread them onto YOUR markup:</span>
+&lt;<span class="tag">div</span> {...<span class="fn">getContainerProps</span>()} <span class="attr">className</span>=<span class="val">"my-grid"</span>&gt;
+  {visibleItems.<span class="fn">map</span>((item, i) =&gt;
+    &lt;<span class="tag">div</span> {...<span class="fn">getItemProps</span>(i)} <span class="attr">className</span>=<span class="val">"my-item"</span>&gt;
+      ...
+    &lt;/<span class="tag">div</span>&gt;
+  )}
+&lt;/<span class="tag">div</span>&gt;
+&lt;<span class="tag">button</span> {...<span class="fn">getLoadMoreProps</span>()} <span class="attr">className</span>=<span class="val">"my-btn"</span>&gt;Load more&lt;/<span class="tag">button</span>&gt;</code></pre>
+
+      <p>Or use the higher-level component with <code>render*</code> props for full markup control:</p>
+
+      <pre><code>&lt;<span class="type">Grid</span>
+  items={photos}
+  <span class="attr">renderContainer</span>={(props, children) =&gt; (
+    &lt;<span class="tag">ul</span> {...props} <span class="attr">className</span>=<span class="val">"photo-grid"</span>&gt;{children}&lt;/<span class="tag">ul</span>&gt;
+  )}
+  <span class="attr">renderItem</span>={(photo, getItemProps) =&gt; (
+    &lt;<span class="tag">li</span> {...<span class="fn">getItemProps</span>()} <span class="attr">className</span>=<span class="val">"photo-card"</span>&gt;
+      &lt;<span class="tag">img</span> <span class="attr">src</span>={photo.src.medium} /&gt;
+    &lt;/<span class="tag">li</span>&gt;
+  )}
+  <span class="attr">renderLoadMore</span>={(props) =&gt; (
+    &lt;<span class="tag">button</span> {...props} <span class="attr">className</span>=<span class="val">"load-more-btn"</span>&gt;Load More&lt;/<span class="tag">button</span>&gt;
+  )}
+/&gt;</code></pre>
+    </div>
+
+    <!-- Installation -->
+    <div class="section" id="install">
+      <h2>Installation</h2>
+      <p>Part of the <code>media-sdk-app</code> monorepo — available as a workspace package.</p>
+      <pre><code><span class="comment"># From repo root</span>
+<span class="fn">npm</span> install
+<span class="fn">npm</span> run build</code></pre>
+
+      <pre><code><span class="comment">// Import in your app</span>
+<span class="kw">import</span> { <span class="type">Grid</span>, <span class="type">Lightbox</span>, <span class="type">Reel</span> } <span class="kw">from</span> <span class="str">"media-ui-react"</span>;</code></pre>
+    </div>
+
+    <hr />
+
+    <!-- Grid -->
+    <div class="section" id="grid">
+      <div class="component-header">
+        <div class="component-icon icon-grid">⊞</div>
+        <div>
+          <h2 style="margin-bottom:4px">Grid</h2>
+          <p style="margin:0;font-size:13px">Paginated grid with load-more. Zero layout opinions.</p>
+        </div>
+      </div>
+
+      <pre><code><span class="kw">import</span> { <span class="type">Grid</span> } <span class="kw">from</span> <span class="str">"media-ui-react"</span>;
+
+&lt;<span class="type">Grid</span>
+  items={photos}
+  <span class="attr">renderItem</span>={(photo, getItemProps) =&gt; (
+    &lt;<span class="tag">div</span> {...<span class="fn">getItemProps</span>()}&gt;
+      &lt;<span class="tag">img</span> <span class="attr">src</span>={photo.src.medium} <span class="attr">onClick</span>={() =&gt; <span class="fn">openLightbox</span>(photo)} /&gt;
+    &lt;/<span class="tag">div</span>&gt;
+  )}
+/&gt;</code></pre>
+
+      <h3>Props</h3>
+      <table>
+        <thead><tr><th>Prop</th><th>Type</th><th></th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>items</td><td>T[]</td><td><span class="req">required</span></td><td>Any array of items. Generic — works with any shape.</td></tr>
+          <tr><td>renderItem</td><td>(item, getItemProps) => ReactNode</td><td><span class="req">required</span></td><td>Render each item. Spread getItemProps() for a11y roles.</td></tr>
+          <tr><td>pageSize</td><td>number</td><td><span class="opt">optional · 12</span></td><td>How many items to show per page.</td></tr>
+          <tr><td>renderContainer</td><td>(props, children) => ReactNode</td><td><span class="opt">optional</span></td><td>Override the wrapping element. Default is a plain div.</td></tr>
+          <tr><td>renderLoadMore</td><td>(props) => ReactNode</td><td><span class="opt">optional</span></td><td>Override the load more button. Default is a plain button.</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Prop Getters</h3>
+      <div class="getter-list">
+        <div class="getter-item">
+          <span class="getter-name">getContainerProps()</span>
+          <span class="getter-desc">Returns <code>role="list"</code> for the grid wrapper.</span>
+        </div>
+        <div class="getter-item">
+          <span class="getter-name">getItemProps(index)</span>
+          <span class="getter-desc">Returns <code>role="listitem"</code> and <code>key</code> for each item.</span>
+        </div>
+        <div class="getter-item">
+          <span class="getter-name">getLoadMoreProps()</span>
+          <span class="getter-desc">Returns <code>onClick</code>, <code>aria-label</code>, and <code>type="button"</code>.</span>
+        </div>
+      </div>
+
+      <h3>Styling Example</h3>
+      <pre><code><span class="comment">/* your CSS */</span>
+.photo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.photo-card img {
+  width: 100%;
+  border-radius: 8px;
+  cursor: pointer;
+}</code></pre>
+    </div>
+
+    <hr />
+
+    <!-- Lightbox -->
+    <div class="section" id="lightbox">
+      <div class="component-header">
+        <div class="component-icon icon-lightbox">⬜</div>
+        <div>
+          <h2 style="margin-bottom:4px">Lightbox</h2>
+          <p style="margin:0;font-size:13px">Full-screen image overlay with navigation, keyboard support, and download.</p>
+        </div>
+      </div>
+
+      <pre><code><span class="kw">import</span> { <span class="type">Lightbox</span> } <span class="kw">from</span> <span class="str">"media-ui-react"</span>;
+
+<span class="kw">const</span> [selectedIndex, setSelectedIndex] = <span class="fn">useState</span>&lt;<span class="type">number</span> | <span class="type">null</span>&gt;(<span class="kw">null</span>);
+
+{selectedIndex !== <span class="kw">null</span> && (
+  &lt;<span class="type">Lightbox</span>
+    items={photos.<span class="fn">map</span>((p) =&gt; ({ id: p.id, imageUrl: p.src.large }))}
+    selectedIndex={selectedIndex}
+    isOpen={<span class="kw">true</span>}
+    <span class="attr">onClose</span>={() =&gt; <span class="fn">setSelectedIndex</span>(<span class="kw">null</span>)}
+    <span class="attr">onDownload</span>={(item) =&gt; sdk.<span class="fn">trackDownload</span>(item)}
+    <span class="attr">renderOverlay</span>={(props, children) =&gt; (
+      &lt;<span class="tag">div</span> {...props} <span class="attr">className</span>=<span class="val">"lb-overlay"</span>&gt;{children}&lt;/<span class="tag">div</span>&gt;
+    )}
+    <span class="attr">renderImage</span>={(props, item) =&gt; (
+      &lt;<span class="tag">img</span> {...props} <span class="attr">src</span>={item.imageUrl} <span class="attr">className</span>=<span class="val">"lb-image"</span> /&gt;
+    )}
+    <span class="attr">renderPrevButton</span>={(props) =&gt; (
+      &lt;<span class="tag">button</span> {...props} <span class="attr">className</span>=<span class="val">"lb-btn lb-prev"</span>&gt;◀&lt;/<span class="tag">button</span>&gt;
+    )}
+    <span class="attr">renderNextButton</span>={(props) =&gt; (
+      &lt;<span class="tag">button</span> {...props} <span class="attr">className</span>=<span class="val">"lb-btn lb-next"</span>&gt;▶&lt;/<span class="tag">button</span>&gt;
+    )}
+    <span class="attr">renderCloseButton</span>={(props) =&gt; (
+      &lt;<span class="tag">button</span> {...props} <span class="attr">className</span>=<span class="val">"lb-btn lb-close"</span>&gt;✕&lt;/<span class="tag">button</span>&gt;
+    )}
+    <span class="attr">renderDownloadButton</span>={(props) =&gt; (
+      &lt;<span class="tag">button</span> {...props} <span class="attr">className</span>=<span class="val">"lb-btn lb-download"</span>&gt;Download&lt;/<span class="tag">button</span>&gt;
+    )}
+  /&gt;
+)}</code></pre>
+
+      <h3>Props</h3>
+      <table>
+        <thead><tr><th>Prop</th><th>Type</th><th></th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>items</td><td>{id, imageUrl}[]</td><td><span class="req">required</span></td><td>Flat array of lightbox items.</td></tr>
+          <tr><td>selectedIndex</td><td>number</td><td><span class="req">required</span></td><td>Index of the initially active item.</td></tr>
+          <tr><td>isOpen</td><td>boolean</td><td><span class="req">required</span></td><td>Controls visibility.</td></tr>
+          <tr><td>onClose</td><td>() => void</td><td><span class="req">required</span></td><td>Called when overlay or close button clicked.</td></tr>
+          <tr><td>onDownload</td><td>(item) => void</td><td><span class="opt">optional</span></td><td>Called after download completes.</td></tr>
+          <tr><td>renderOverlay</td><td>(props, children) => ReactNode</td><td><span class="opt">optional</span></td><td>Override the backdrop element.</td></tr>
+          <tr><td>renderImage</td><td>(props, item) => ReactNode</td><td><span class="opt">optional</span></td><td>Override the image element.</td></tr>
+          <tr><td>renderPrevButton</td><td>(props) => ReactNode</td><td><span class="opt">optional</span></td><td>Override previous button.</td></tr>
+          <tr><td>renderNextButton</td><td>(props) => ReactNode</td><td><span class="opt">optional</span></td><td>Override next button.</td></tr>
+          <tr><td>renderCloseButton</td><td>(props) => ReactNode</td><td><span class="opt">optional</span></td><td>Override close button.</td></tr>
+          <tr><td>renderDownloadButton</td><td>(props) => ReactNode</td><td><span class="opt">optional</span></td><td>Override download button.</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Prop Getters (via useLightbox)</h3>
+      <div class="getter-list">
+        <div class="getter-item">
+          <span class="getter-name">getOverlayProps()</span>
+          <span class="getter-desc">role="dialog", aria-modal, aria-label, onClick to close.</span>
+        </div>
+        <div class="getter-item">
+          <span class="getter-name">getImageProps()</span>
+          <span class="getter-desc">role="img", onClick stops propagation.</span>
+        </div>
+        <div class="getter-item">
+          <span class="getter-name">getPrevButtonProps()</span>
+          <span class="getter-desc">onClick prev, aria-label="Previous image", type="button".</span>
+        </div>
+        <div class="getter-item">
+          <span class="getter-name">getNextButtonProps()</span>
+          <span class="getter-desc">onClick next, aria-label="Next image", type="button".</span>
+        </div>
+        <div class="getter-item">
+          <span class="getter-name">getCloseButtonProps()</span>
+          <span class="getter-desc">onClick close, aria-label="Close lightbox", type="button".</span>
+        </div>
+        <div class="getter-item">
+          <span class="getter-name">getDownloadButtonProps(onDownload, item)</span>
+          <span class="getter-desc">Handles blob fetch + browser download + fires onDownload callback.</span>
+        </div>
+      </div>
+
+      <h3>Keyboard Support</h3>
+      <p>Built into <code>useLightbox</code> automatically — no extra setup needed:</p>
+      <ul>
+        <li><code>Escape</code> — closes the lightbox</li>
+        <li><code>ArrowRight</code> — next image</li>
+        <li><code>ArrowLeft</code> — previous image</li>
+      </ul>
+
+      <div class="callout callout-warn">
+        <strong>Portal rendering.</strong> Lightbox renders via <code>createPortal</code> into <code>document.body</code> — it always appears above other content regardless of z-index stacking contexts in your app.
+      </div>
+    </div>
+
+    <hr />
+
+    <!-- ReelSwiper -->
+    <div class="section" id="reel">
+      <div class="component-header">
+        <div class="component-icon icon-reel">▶</div>
+        <div>
+          <h2 style="margin-bottom:4px">ReelSwiper</h2>
+          <p style="margin:0;font-size:13px">Vertical snap-scroll video reel with active-item autoplay.</p>
+        </div>
+      </div>
+
+      <pre><code><span class="kw">import</span> { <span class="type">Reel</span> } <span class="kw">from</span> <span class="str">"media-ui-react"</span>;
+
+<span class="kw">const</span> reelItems = videos.<span class="fn">map</span>((v) =&gt; ({
+  id: v.id,
+  videoUrl: v.videoUrl?.<span class="fn">replace</span>(<span class="str">/[[\]]/g</span>, <span class="str">""</span>), <span class="comment">// clean encoded brackets</span>
+}));
+
+&lt;<span class="type">Reel</span> items={reelItems} /&gt;</code></pre>
+
+      <h3>Props</h3>
+      <table>
+        <thead><tr><th>Prop</th><th>Type</th><th></th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>items</td><td>{id: number, videoUrl: string}[]</td><td><span class="req">required</span></td><td>Video items. Only videoUrl is needed.</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Behaviour</h3>
+      <ul>
+        <li>Each item snaps to full viewport height (<code>scroll-snap-type: y mandatory</code>)</li>
+        <li>Active index tracked via scroll position</li>
+        <li>Only the active video has <code>autoPlay</code> — others are paused</li>
+        <li>All videos are <code>muted</code>, <code>loop</code>, <code>playsInline</code> (required for browser autoplay)</li>
+      </ul>
+
+      <div class="callout callout-warn">
+        <strong>Height requirement.</strong> The Reel container is <code>height: 100vh</code>. Its parent must not have <code>overflow: hidden</code> or a fixed height smaller than the viewport.
+      </div>
+
+      <h3>Video URL Gotcha</h3>
+      <p>Pexels video URLs sometimes contain encoded brackets. Always clean them before passing:</p>
+      <pre><code>videoUrl: v.videoUrl?.<span class="fn">replace</span>(<span class="str">/[[\]]/g</span>, <span class="str">""</span>)</code></pre>
+    </div>
+
+    <hr />
+
+    <!-- useGrid hook -->
+    <div class="section" id="usegrid">
+      <h2>useGrid</h2>
+      <p>The hook powering <code>Grid</code>. Use directly if you want full control over the rendered markup.</p>
+
+      <pre><code><span class="kw">import</span> { <span class="fn">useGrid</span> } <span class="kw">from</span> <span class="str">"media-ui-react"</span>;
+
+<span class="kw">const</span> {
+  visibleItems,
+  hasMore,
+  loadMore,
+  getContainerProps,
+  getItemProps,
+  getLoadMoreProps,
+} = <span class="fn">useGrid</span>({ items, pageSize: <span class="num">12</span> });</code></pre>
+
+      <table>
+        <thead><tr><th>Return value</th><th>Type</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>visibleItems</td><td>T[]</td><td>Current page slice of items.</td></tr>
+          <tr><td>hasMore</td><td>boolean</td><td>True if more items exist beyond current page.</td></tr>
+          <tr><td>loadMore</td><td>() => void</td><td>Increments visible count by pageSize.</td></tr>
+          <tr><td>getContainerProps</td><td>() => object</td><td>Props for the grid wrapper.</td></tr>
+          <tr><td>getItemProps</td><td>(index) => object</td><td>Props for each item.</td></tr>
+          <tr><td>getLoadMoreProps</td><td>() => object</td><td>Props for the load more trigger.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- useLightbox hook -->
+    <div class="section" id="uselightbox">
+      <h2>useLightbox</h2>
+      <p>The hook powering <code>Lightbox</code>. Use directly for fully custom lightbox markup.</p>
+
+      <pre><code><span class="kw">import</span> { <span class="fn">useLightbox</span> } <span class="kw">from</span> <span class="str">"media-ui-react"</span>;
+
+<span class="kw">const</span> {
+  currentIndex,
+  next,
+  previous,
+  getOverlayProps,
+  getImageProps,
+  getPrevButtonProps,
+  getNextButtonProps,
+  getCloseButtonProps,
+  getDownloadButtonProps,
+} = <span class="fn">useLightbox</span>({
+  initialIndex: selectedIndex,
+  totalItems: items.length,
+  onClose,
+});</code></pre>
+
+      <table>
+        <thead><tr><th>Return value</th><th>Type</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>currentIndex</td><td>number</td><td>Currently active item index.</td></tr>
+          <tr><td>next</td><td>() => void</td><td>Go to next item (wraps around).</td></tr>
+          <tr><td>previous</td><td>() => void</td><td>Go to previous item (wraps around).</td></tr>
+          <tr><td>getOverlayProps</td><td>() => object</td><td>Props for the backdrop.</td></tr>
+          <tr><td>getImageProps</td><td>() => object</td><td>Props for the image.</td></tr>
+          <tr><td>getPrevButtonProps</td><td>() => object</td><td>Props for prev button.</td></tr>
+          <tr><td>getNextButtonProps</td><td>() => object</td><td>Props for next button.</td></tr>
+          <tr><td>getCloseButtonProps</td><td>() => object</td><td>Props for close button.</td></tr>
+          <tr><td>getDownloadButtonProps</td><td>(onDownload, item) => object</td><td>Props for download button. Handles blob fetch internally.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+  </main>
+</div>
+
+</body>
+</html>
