@@ -1,41 +1,39 @@
-import { useEffect, useRef } from "react";
-import { GridItem } from "./types";
+import { useState } from "react";
 
-interface UseGridProps {
-  items: GridItem[];
-  onSelect?(item: GridItem): void;
-  onLoadMore?(): void;
+interface UseGridOptions<T> {
+  items: T[];
+  pageSize?: number;
 }
 
-export function useGrid({
-  items,
-  onSelect,
-  onLoadMore,
-}: UseGridProps) {
-  const loaderRef = useRef<HTMLDivElement | null>(null);
+export function useGrid<T>({ items, pageSize = 12 }: UseGridOptions<T>) {
+  const [visibleCount, setVisibleCount] = useState(pageSize);
 
-  useEffect(() => {
-    if (!loaderRef.current || !onLoadMore) return;
+  const visibleItems = items.slice(0, visibleCount);
+  const hasMore = visibleCount < items.length;
 
-    const observer = new IntersectionObserver((entries) => {
-      if (entries[0].isIntersecting) {
-        onLoadMore();
-      }
-    });
+  const loadMore = () => setVisibleCount((c) => c + pageSize);
 
-    observer.observe(loaderRef.current);
+  const getContainerProps = () => ({
+    role: "list" as const,
+  });
 
-    return () => observer.disconnect();
-  }, [onLoadMore]);
+  const getItemProps = (index: number) => ({
+    role: "listitem" as const,
+    key: index,
+  });
 
-  const getItemProps = (item: GridItem) => ({
-    onClick: () => onSelect?.(item),
-    role: "button" as const,
-    tabIndex: 0,
+  const getLoadMoreProps = () => ({
+    onClick: loadMore,
+    "aria-label": "Load more items",
+    type: "button" as const,
   });
 
   return {
+    visibleItems,
+    hasMore,
+    loadMore,
+    getContainerProps,
     getItemProps,
-    loaderRef,
+    getLoadMoreProps,
   };
 }

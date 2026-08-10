@@ -3,47 +3,59 @@ import { useGrid } from "../hooks/useGrid";
 
 interface GridProps<T> {
   items: T[];
-  renderItem: (item: T) => React.ReactNode;
+  pageSize?: number;
+  renderItem: (item: T, getItemProps: (index: number) => object) => React.ReactNode;
+  renderLoadMore?: (getLoadMoreProps: () => object) => React.ReactNode;
+  renderContainer?: (
+    getContainerProps: () => object,
+    children: React.ReactNode
+  ) => React.ReactNode;
 }
 
 export function Grid<T>({
   items,
+  pageSize,
   renderItem,
+  renderLoadMore,
+  renderContainer,
 }: GridProps<T>) {
   const {
-    items: visibleItems,
-    loadMore,
+    visibleItems,
     hasMore,
-  } = useGrid({ items });
+    getContainerProps,
+    getItemProps,
+    getLoadMoreProps,
+  } = useGrid({ items, pageSize });
 
-  return (
-    <>
-      <div
-        style={{
+  const children = visibleItems.map((item, index) =>
+    renderItem(item, getItemProps.bind(null, index))
+  );
+
+  const container = renderContainer ? (
+    renderContainer(getContainerProps, children)
+  ) : (
+    <div style={{
           display: "grid",
           gridTemplateColumns: "repeat(auto-fill,minmax(220px,1fr))",
           gap: 16,
-        }}
-      >
-        {visibleItems.map((item, index) => (
-          <React.Fragment key={index}>
-            {renderItem(item)}
-          </React.Fragment>
-        ))}
-      </div>
+        }} {...getContainerProps()}>{children}</div>
+  );
 
-      {hasMore && (
-        <div
-          style={{
+  const loadMoreEl = hasMore
+    ? renderLoadMore ? (
+        renderLoadMore(getLoadMoreProps)
+      ) : (
+        <button style={{
             textAlign: "center",
             marginTop: 24,
-          }}
-        >
-          <button onClick={loadMore}>
-            Load More
-          </button>
-        </div>
-      )}
+          }} {...getLoadMoreProps()}>Load More</button>
+      )
+    : null;
+
+  return (
+    <>
+      {container}
+      {loadMoreEl}
     </>
   );
 }

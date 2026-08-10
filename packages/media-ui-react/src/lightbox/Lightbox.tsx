@@ -1,14 +1,48 @@
-import { LightboxProps } from "./types";
-import { useLightbox } from "./useLightbox";
 import { createPortal } from "react-dom";
+import { useLightbox } from "../lightbox/useLightbox"
+
+export interface LightboxItem {
+  id: number;
+  imageUrl: string;
+}
+
+export interface LightboxProps {
+  items: LightboxItem[];
+  selectedIndex: number;
+  isOpen: boolean;
+  onClose: () => void;
+  onDownload?: (item: LightboxItem) => void;
+  // Render props — consumer controls all markup and styles
+  renderOverlay?: (props: object, children: React.ReactNode) => React.ReactNode;
+  renderImage?: (props: object, item: LightboxItem) => React.ReactNode;
+  renderPrevButton?: (props: object) => React.ReactNode;
+  renderNextButton?: (props: object) => React.ReactNode;
+  renderCloseButton?: (props: object) => React.ReactNode;
+  renderDownloadButton?: (props: object) => React.ReactNode;
+}
+
 export function Lightbox({
   items,
   selectedIndex,
   isOpen,
   onClose,
-   onDownload,
+  onDownload,
+  renderOverlay,
+  renderImage,
+  renderPrevButton,
+  renderNextButton,
+  renderCloseButton,
+  renderDownloadButton,
 }: LightboxProps) {
-  const { currentIndex, next, previous } = useLightbox({
+  const {
+    currentIndex,
+    getOverlayProps,
+    getImageProps,
+    getPrevButtonProps,
+    getNextButtonProps,
+    getCloseButtonProps,
+    getDownloadButtonProps,
+  } = useLightbox({
     initialIndex: selectedIndex,
     totalItems: items.length,
     onClose,
@@ -16,209 +50,60 @@ export function Lightbox({
 
   if (!isOpen) return null;
 
-return createPortal(
-  <div
-    onClick={onClose}
-    style={{
-      position: "fixed",
-      inset: 0,
-      background: "rgba(0,0,0,.9)",
+  const currentItem = items[currentIndex];
 
-      display: "flex",
-      justifyContent: "center",
-      alignItems: "center",
+  const prevButton = renderPrevButton ? (
+    renderPrevButton(getPrevButtonProps())
+  ) : (
+    <button {...getPrevButtonProps()}>◀</button>
+  );
 
-      zIndex: 99999,
-    }}
-  >
-    <button
-      onClick={(e) => {
-        e.stopPropagation();
-        previous();
-      }}
-      style={{
-        position: "absolute",
-        left: 20,
-        fontSize: 24,
-        cursor: "pointer",
-        padding: "8px 16px",
+  const nextButton = renderNextButton ? (
+    renderNextButton(getNextButtonProps())
+  ) : (
+    <button {...getNextButtonProps()}>▶</button>
+  );
 
-  background: "rgba(255, 255, 255, 0.15)",   // translucent
-  backdropFilter: "blur(10px)",             // glass blur
-  WebkitBackdropFilter: "blur(10px)",       // safari support
+  const closeButton = renderCloseButton ? (
+    renderCloseButton(getCloseButtonProps())
+  ) : (
+    <button {...getCloseButtonProps()}>✕</button>
+  );
 
-  border: "1px solid rgba(255,255,255,0.3)",
-  color: "#fffd",
-  borderRadius: 999,   // pill shape
-  fontWeight: 400,
-  boxShadow: "0 8px 32px rgba(0,0,0,0.25)",
-  transition: "all 0.2s ease",
-      }}
-      onMouseEnter={(e) => {
-  e.currentTarget.style.background = "rgba(255,255,255,0.25)";
-  
-}}
-
-onMouseLeave={(e) => {
-  e.currentTarget.style.background = "rgba(255,255,255,0.15)";
-  
-}}
-    >◀
+  const downloadButton = renderDownloadButton ? (
+    renderDownloadButton(getDownloadButtonProps(onDownload, currentItem))
+  ) : (
+    <button {...getDownloadButtonProps(onDownload, currentItem)}>
+      Download
     </button>
+  );
 
+  const image = renderImage ? (
+    renderImage(getImageProps(), currentItem)
+  ) : (
     <img
-      src={items[currentIndex].imageUrl}
+      {...getImageProps()}
+      src={currentItem.imageUrl}
       alt=""
-      onClick={(e) => e.stopPropagation()}
-      style={{
-        maxWidth: "90vw",
-        maxHeight: "90vh",
-        objectFit: "contain",
-        borderRadius: 12,
-      }}
+      style={{ maxWidth: "90vw", maxHeight: "90vh", objectFit: "contain" }}
     />
+  );
 
-    <button
+  const content = (
+    <>
+      {prevButton}
+      {image}
+      {nextButton}
+      {closeButton}
+      {downloadButton}
+    </>
+  );
 
-onClick={async (e) => {
-  e.stopPropagation();
+  const overlay = renderOverlay ? (
+    renderOverlay(getOverlayProps(), content)
+  ) : (
+    <div {...getOverlayProps()}>{content}</div>
+  );
 
-  const url = items[currentIndex].imageUrl;
-
-  const response = await fetch(url);
-  const blob = await response.blob();
-
-  const blobUrl = URL.createObjectURL(blob);
-
-  const link = document.createElement("a");
-  link.href = blobUrl;
-  link.download = `image-${items[currentIndex].id}.jpg`;
-
-  link.click();
-
-  URL.revokeObjectURL(blobUrl);
-
-  onDownload?.(items[currentIndex]);
-}}
-
-
-
-
-onMouseEnter={(e) => {
-  e.currentTarget.style.background = "rgba(255,255,255,0.25)";
-  e.currentTarget.style.transform = "translateX(-50%) scale(1.05)";
-}}
-
-onMouseLeave={(e) => {
-  e.currentTarget.style.background = "rgba(255,255,255,0.15)";
-  e.currentTarget.style.transform = "translateX(-50%) scale(1)";
-}}
-style={{
-  position: "absolute",
-  bottom: 5,
-  left: "50%",
-  transform: "translateX(-50%)",
-
-  padding: "8px 16px",
-
-  background: "rgba(255, 255, 255, 0.15)",   // translucent
-  backdropFilter: "blur(10px)",             // glass blur
-  WebkitBackdropFilter: "blur(10px)",       // safari support
-
-  border: "1px solid rgba(255,255,255,0.3)",
-
-  color: "#fffd",
-
-  borderRadius: 999,   // pill shape
-
-  fontSize: 14,
-  fontWeight: 400,
-
-  cursor: "pointer",
-
-  boxShadow: "0 8px 32px rgba(0,0,0,0.25)",
-
-  transition: "all 0.2s ease",
-}}
->
-  Download
-</button>
-
-    <button
-      onClick={(e) => {
-        e.stopPropagation();
-        next();
-      }}
-     
-            style={{
-        position: "absolute",
-        right: 20,
-        fontSize: 24,
-        cursor: "pointer",
-        padding: "8px 16px",
-
-  background: "rgba(255, 255, 255, 0.15)",   // translucent
-  backdropFilter: "blur(10px)",             // glass blur
-  WebkitBackdropFilter: "blur(10px)",       // safari support
-
-  border: "1px solid rgba(255,255,255,0.3)",
-  color: "#fffd",
-  borderRadius: 999,   // pill shape
-  fontWeight: 400,
-  boxShadow: "0 8px 32px rgba(0,0,0,0.25)",
-  transition: "all 0.2s ease",
-      }}
-      onMouseEnter={(e) => {
-  e.currentTarget.style.background = "rgba(255,255,255,0.25)";
- 
-}}
-
-onMouseLeave={(e) => {
-  e.currentTarget.style.background = "rgba(255,255,255,0.15)";
- 
-}}
-    >
-      ▶
-    </button>
-
-    <button
-      onClick={(e) => {
-        e.stopPropagation();
-        onClose();
-      }}
-   
-            style={{
-        position: "absolute",
-        top: 20,
-         right: 20,
-        fontSize: 20,
-        cursor: "pointer",
-        padding: "8px 14px",
-
-  background: "rgba(255, 255, 255, 0.15)",   // translucent
-  backdropFilter: "blur(10px)",             // glass blur
-  WebkitBackdropFilter: "blur(10px)",       // safari support
-
-  border: "1px solid rgba(255,255,255,0.3)",
-  color: "#fffd",
-  borderRadius: 999,   // pill shape
-  fontWeight: 400,
-  boxShadow: "0 8px 32px rgba(0,0,0,0.25)",
-  transition: "all 0.2s ease",
-      }}
-      onMouseEnter={(e) => {
-  e.currentTarget.style.background = "rgba(255,255,255,0.25)";
-  
-}}
-
-onMouseLeave={(e) => {
-  e.currentTarget.style.background = "rgba(255,255,255,0.15)";
- 
-}}
-    >
-      ✕
-    </button>
-  </div>,
-  document.body
-);
+  return createPortal(overlay, document.body);
 }

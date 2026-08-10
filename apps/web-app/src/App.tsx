@@ -241,10 +241,8 @@ export default function App() {
 
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const isFirstRender = useRef(true);
-  // ✅ FIX 1: Track loading in a ref so the observer never closes over stale state
   const loadingRef = useRef(false);
 
-  // ✅ FIX 2: Single unified fetch function — resets or appends based on `currentPage`
   const fetchData = useCallback(
     async (q: string, currentPage: number) => {
       if (loadingRef.current) return;
@@ -270,7 +268,6 @@ export default function App() {
         const newVideos = videoRes?.videos || [];
 
         if (currentPage === 1) {
-          // ✅ FIX 3: Set images + videos in ONE state update batch to avoid blank flash
           setImages(newPhotos);
           setVideos(newVideos);
         } else {
@@ -287,29 +284,24 @@ export default function App() {
     [sdk]
   );
 
-  // ✅ FIX 4: Debounce resets page to 1 (no separate reset effect needed)
   useEffect(() => {
     if (isFirstRender.current) {
       isFirstRender.current = false;
       return;
     }
     const timer = setTimeout(() => {
-      setPage(1); // triggers the fetch effect below with page=1
+      setPage(1);
       setDebouncedQuery(query);
     }, 500);
-
     return () => clearTimeout(timer);
   }, [query]);
 
-  // ✅ FIX 5: One single effect drives all fetching
   useEffect(() => {
     fetchData(debouncedQuery, page);
   }, [debouncedQuery, page]);
 
-  // ✅ FIX 6: Observer uses ref for loading — never stale, never re-attaches on every load
   useEffect(() => {
     if (!loadMoreRef.current) return;
-
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting && !loadingRef.current) {
@@ -318,10 +310,20 @@ export default function App() {
       },
       { rootMargin: "200px" }
     );
-
     observer.observe(loadMoreRef.current);
     return () => observer.disconnect();
-  }, []); // ✅ empty deps — attaches once, never re-registers
+  }, []);
+
+  // ✅ Track view event when lightbox opens
+  const handleOpenLightbox = (index: number) => {
+    setSelectedIndex(index);
+    sdk.trackView(images[index]);
+  };
+
+  // ✅ Track download event when user downloads
+  const handleDownload = (item: any) => {
+    sdk.trackDownload(item);
+  };
 
   const reelItems = videos.map((v: any) => ({
     id: v.id,
@@ -380,7 +382,7 @@ export default function App() {
             loading="lazy"
             onClick={() => {
               const index = images.findIndex((p) => p.id === photo.id);
-              setSelectedIndex(index);
+              handleOpenLightbox(index); // ✅ emits view event
             }}
             style={{ width: "100%", borderRadius: 10, cursor: "pointer" }}
           />
@@ -403,16 +405,127 @@ export default function App() {
 
       {/* LIGHTBOX */}
       {selectedIndex !== null && (
-        <Lightbox
-          items={images.map((p: any) => ({
-            id: p.id,
-            imageUrl: p.src?.large,
-          }))}
-          selectedIndex={selectedIndex}
-          isOpen={true}
-          onClose={() => setSelectedIndex(null)}
-        />
-      )}
+  <Lightbox
+    items={images.map((p: any) => ({
+      id: p.id,
+      imageUrl: p.src?.large,
+    }))}
+    selectedIndex={selectedIndex}
+    isOpen={true}
+    onClose={() => setSelectedIndex(null)}
+    onDownload={handleDownload}
+
+    renderOverlay={(props, children) => (
+      <div
+        {...props}
+        style={{
+          position: "fixed",
+          inset: 0,
+          background: "rgba(0,0,0,.9)",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          zIndex: 99999,
+        }}
+      >
+        {children}
+      </div>
+    )}
+
+    renderImage={(props, item) => (
+      <img
+        {...props}
+        src={item.imageUrl}
+        alt=""
+        style={{
+          maxWidth: "90vw",
+          maxHeight: "90vh",
+          objectFit: "contain",
+          borderRadius: 12,
+        }}
+      />
+    )}
+
+    renderPrevButton={(props) => (
+      <button
+        {...props}
+        style={{
+          position: "absolute",
+          left: 20,
+          fontSize: 24,
+          cursor: "pointer",
+          padding: "8px 16px",
+          background: "rgba(255,255,255,0.15)",
+          backdropFilter: "blur(10px)",
+          border: "1px solid rgba(255,255,255,0.3)",
+          color: "#fffd",
+          borderRadius: 999,
+          boxShadow: "0 8px 32px rgba(0,0,0,0.25)",
+        }}
+      >◀</button>
+    )}
+
+    renderNextButton={(props) => (
+      <button
+        {...props}
+        style={{
+          position: "absolute",
+          right: 20,
+          fontSize: 24,
+          cursor: "pointer",
+          padding: "8px 16px",
+          background: "rgba(255,255,255,0.15)",
+          backdropFilter: "blur(10px)",
+          border: "1px solid rgba(255,255,255,0.3)",
+          color: "#fffd",
+          borderRadius: 999,
+          boxShadow: "0 8px 32px rgba(0,0,0,0.25)",
+        }}
+      >▶</button>
+    )}
+
+    renderCloseButton={(props) => (
+      <button
+        {...props}
+        style={{
+          position: "absolute",
+          top: 20,
+          right: 20,
+          fontSize: 20,
+          cursor: "pointer",
+          padding: "8px 14px",
+          background: "rgba(255,255,255,0.15)",
+          backdropFilter: "blur(10px)",
+          border: "1px solid rgba(255,255,255,0.3)",
+          color: "#fffd",
+          borderRadius: 999,
+          boxShadow: "0 8px 32px rgba(0,0,0,0.25)",
+        }}
+      >✕</button>
+    )}
+
+    renderDownloadButton={(props) => (
+      <button
+        {...props}
+        style={{
+          position: "absolute",
+          bottom: 5,
+          left: "50%",
+          transform: "translateX(-50%)",
+          padding: "8px 16px",
+          background: "rgba(255,255,255,0.15)",
+          backdropFilter: "blur(10px)",
+          border: "1px solid rgba(255,255,255,0.3)",
+          color: "#fffd",
+          borderRadius: 999,
+          fontSize: 14,
+          cursor: "pointer",
+          boxShadow: "0 8px 32px rgba(0,0,0,0.25)",
+        }}
+      >Download</button>
+    )}
+  />
+)}
     </div>
   );
 }

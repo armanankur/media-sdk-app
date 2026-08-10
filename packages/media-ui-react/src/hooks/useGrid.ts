@@ -1,31 +1,39 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
-interface UseGridProps<T> {
+interface UseGridOptions<T> {
   items: T[];
   pageSize?: number;
 }
 
-export function useGrid<T>({
-  items,
-  pageSize = 20,
-}: UseGridProps<T>) {
+export function useGrid<T>({ items, pageSize = 12 }: UseGridOptions<T>) {
   const [visibleCount, setVisibleCount] = useState(pageSize);
 
-  useEffect(() => {
-    setVisibleCount(pageSize);
-  }, [items, pageSize]);
-
   const visibleItems = items.slice(0, visibleCount);
-
-  function loadMore() {
-    setVisibleCount((prev) => prev + pageSize);
-  }
-
   const hasMore = visibleCount < items.length;
 
+  const loadMore = () => setVisibleCount((c) => c + pageSize);
+
+  const getContainerProps = () => ({
+    role: "list" as const,
+  });
+
+  const getItemProps = (index: number) => ({
+    role: "listitem" as const,
+    key: index,
+  });
+
+  const getLoadMoreProps = () => ({
+    onClick: loadMore,
+    "aria-label": "Load more items",
+    type: "button" as const,
+  });
+
   return {
-    items: visibleItems,
-    loadMore,
+    visibleItems,
     hasMore,
+    loadMore,
+    getContainerProps,
+    getItemProps,
+    getLoadMoreProps,
   };
 }
