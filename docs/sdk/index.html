@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Media SDK — Documentation</title>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --border: #2a2d3a;
+      --primary: #6366f1;
+      --primary-light: #818cf8;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --code-bg: #12151f;
+      --green: #34d399;
+      --red: #f87171;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+    }
+
+    a { color: var(--primary-light); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* Layout */
+    .layout { display: flex; min-height: 100vh; }
+
+    /* Sidebar */
+    .sidebar {
+      width: 260px;
+      flex-shrink: 0;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: 24px 0;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+    }
+
+    .sidebar-logo {
+      padding: 0 24px 24px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 16px;
+    }
+
+    .sidebar-logo h1 {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.3px;
+    }
+
+    .sidebar-logo span {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .nav-section {
+      padding: 8px 24px 4px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--muted);
+      margin-top: 8px;
+    }
+
+    .nav-link {
+      display: block;
+      padding: 7px 24px;
+      font-size: 14px;
+      color: var(--muted);
+      transition: all 0.15s;
+      border-left: 2px solid transparent;
+    }
+
+    .nav-link:hover {
+      color: var(--text);
+      background: rgba(99,102,241,0.06);
+      text-decoration: none;
+      border-left-color: var(--primary);
+    }
+
+    /* Main content */
+    .main {
+      flex: 1;
+      max-width: 860px;
+      padding: 48px 56px;
+      overflow-x: hidden;
+    }
+
+    /* Sections */
+    .section { margin-bottom: 64px; }
+
+    h2 {
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.4px;
+      margin-bottom: 12px;
+      padding-top: 8px;
+    }
+
+    h3 {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text);
+      margin: 28px 0 10px;
+    }
+
+    h4 {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--primary-light);
+      margin: 20px 0 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    p { color: var(--muted); margin-bottom: 14px; font-size: 15px; }
+
+    /* Hero */
+    .hero {
+      background: linear-gradient(135deg, rgba(99,102,241,0.12), rgba(139,92,246,0.06));
+      border: 1px solid rgba(99,102,241,0.25);
+      border-radius: 16px;
+      padding: 40px;
+      margin-bottom: 48px;
+    }
+
+    .hero h1 {
+      font-size: 36px;
+      font-weight: 800;
+      letter-spacing: -0.8px;
+      background: linear-gradient(135deg, #fff, #818cf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 12px;
+    }
+
+    .hero p { font-size: 16px; color: #94a3b8; margin-bottom: 24px; }
+
+    .badges { display: flex; gap: 10px; flex-wrap: wrap; }
+
+    .badge {
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 500;
+      border: 1px solid;
+    }
+
+    .badge-blue { background: rgba(99,102,241,0.15); border-color: rgba(99,102,241,0.4); color: #a5b4fc; }
+    .badge-green { background: rgba(52,211,153,0.1); border-color: rgba(52,211,153,0.3); color: #6ee7b7; }
+    .badge-purple { background: rgba(167,139,250,0.1); border-color: rgba(167,139,250,0.3); color: #c4b5fd; }
+
+    /* Code blocks */
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px 24px;
+      overflow-x: auto;
+      margin: 12px 0 20px;
+      font-size: 13.5px;
+      line-height: 1.6;
+    }
+
+    code {
+      font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", monospace;
+      color: #c4b5fd;
+    }
+
+    p code, li code {
+      background: rgba(99,102,241,0.12);
+      border: 1px solid rgba(99,102,241,0.2);
+      border-radius: 4px;
+      padding: 1px 6px;
+      font-size: 13px;
+      color: #a5b4fc;
+    }
+
+    /* Keyword highlighting */
+    .kw { color: #f472b6; }
+    .str { color: #86efac; }
+    .fn { color: #60a5fa; }
+    .comment { color: #475569; font-style: italic; }
+    .type { color: #fbbf24; }
+    .num { color: #fb923c; }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0 24px;
+      font-size: 14px;
+    }
+
+    th {
+      text-align: left;
+      padding: 10px 14px;
+      background: var(--surface);
+      color: var(--muted);
+      font-weight: 600;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    td {
+      padding: 10px 14px;
+      border-bottom: 1px solid rgba(42,45,58,0.6);
+      color: var(--muted);
+      vertical-align: top;
+    }
+
+    td:first-child { color: var(--text); font-family: monospace; font-size: 13px; }
+
+    tr:last-child td { border-bottom: none; }
+
+    /* Cards */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 16px;
+      margin: 20px 0;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      transition: border-color 0.2s;
+    }
+
+    .card:hover { border-color: var(--primary); }
+
+    .card-icon { font-size: 24px; margin-bottom: 10px; }
+    .card h3 { font-size: 15px; margin: 0 0 6px; }
+    .card p { font-size: 13px; margin: 0; }
+
+    /* Divider */
+    hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
+
+    /* Arch diagram */
+    .arch {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 24px;
+      font-family: monospace;
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 2;
+    }
+
+    .arch .highlight { color: var(--primary-light); font-weight: bold; }
+    .arch .arrow { color: #475569; }
+
+    /* Required badge */
+    .req { color: var(--green); font-size: 12px; }
+    .opt { color: var(--muted); font-size: 12px; }
+
+    ul { padding-left: 20px; color: var(--muted); font-size: 15px; }
+    li { margin-bottom: 6px; }
+
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .main { padding: 24px 20px; }
+      .hero { padding: 24px; }
+      .hero h1 { font-size: 26px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="sidebar-logo">
+      <h1>Media SDK</h1>
+      <span>v1.0.0 · Pexels API</span>
+    </div>
+
+    <div class="nav-section">Getting Started</div>
+    <a class="nav-link" href="#overview">Overview</a>
+    <a class="nav-link" href="#architecture">Architecture</a>
+    <a class="nav-link" href="#installation">Installation</a>
+
+    <div class="nav-section">media-core</div>
+    <a class="nav-link" href="#mediasdk">MediaSDK</a>
+    <a class="nav-link" href="#pexelsclient">PexelsClient</a>
+    <a class="nav-link" href="#events">Event Emitter</a>
+    <a class="nav-link" href="#cache">MemoryCache</a>
+
+    <div class="nav-section">media-react</div>
+    <a class="nav-link" href="#provider">MediaProvider</a>
+    <a class="nav-link" href="#usemedia">useMedia()</a>
+
+    <div class="nav-section">Resources</div>
+    <a class="nav-link" href="https://github.com/armanankur/media-sdk-app" target="_blank">GitHub ↗</a>
+    <a class="nav-link" href="https://media-sdk-app-web-app.vercel.app" target="_blank">Live App ↗</a>
+  </nav>
+
+  <!-- Main -->
+  <main class="main">
+
+    <!-- Hero -->
+    <div class="hero">
+      <h1>Media SDK</h1>
+      <p>A headless, framework-agnostic media SDK powered by the Pexels API. Search photos and videos, track events, and build any UI on top.</p>
+      <div class="badges">
+        <span class="badge badge-blue">TypeScript</span>
+        <span class="badge badge-green">Zero UI</span>
+        <span class="badge badge-purple">Pexels API</span>
+        <span class="badge badge-blue">React Wrapper</span>
+      </div>
+    </div>
+
+    <!-- Overview -->
+    <div class="section" id="overview">
+      <h2>Overview</h2>
+      <p>Media SDK is a monorepo of packages that let you build media-rich applications without coupling your data layer to your UI layer.</p>
+
+      <div class="card-grid">
+        <div class="card">
+          <div class="card-icon">⚙️</div>
+          <h3>media-core</h3>
+          <p>Framework-agnostic SDK. Pure TypeScript, no React, no DOM.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon">⚛️</div>
+          <h3>media-react</h3>
+          <p>React wrapper. Provider + hooks. No business logic.</p>
+        </div>
+        <div class="card">
+          <div class="card-icon">🧩</div>
+          <h3>media-ui-react</h3>
+          <p>Headless UI components. Grid, Lightbox, Reels. No shipped styles.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Architecture -->
+    <div class="section" id="architecture">
+      <h2>Architecture</h2>
+      <p>Dependency direction is strictly enforced. Components never import core; core never imports React.</p>
+
+      <div class="arch">
+        <span class="highlight">app</span>
+        <span class="arrow"> ──────────────────►</span>
+        <span class="highlight"> media-react</span>
+        <span class="arrow"> ──►</span>
+        <span class="highlight"> media-core</span>
+        <br />
+        <span class="highlight">app</span>
+        <span class="arrow"> ──────────────────►</span>
+        <span class="highlight"> media-ui-react</span>
+        <br /><br />
+        <span class="comment">// media-ui-react never imports media-core or media-react</span>
+        <br />
+        <span class="comment">// media-core has zero React/DOM imports</span>
+      </div>
+    </div>
+
+    <!-- Installation -->
+    <div class="section" id="installation">
+      <h2>Installation</h2>
+      <p>Clone the repo and install from the root. All packages are workspace-linked automatically.</p>
+      <pre><code><span class="fn">git</span> clone https://github.com/armanankur/media-sdk-app
+<span class="fn">cd</span> media-sdk-app
+<span class="fn">npm</span> install
+<span class="fn">npm</span> run build</code></pre>
+
+      <p>Add your Pexels API key to <code>apps/web-app/.env</code>:</p>
+      <pre><code>VITE_PEXELS_API_KEY=<span class="str">your_key_here</span></code></pre>
+    </div>
+
+    <hr />
+
+    <!-- MediaSDK -->
+    <div class="section" id="mediasdk">
+      <h2>MediaSDK</h2>
+      <p>The top-level class from <code>media-core</code>. Wires together the API client, cache, and event emitter.</p>
+
+      <pre><code><span class="kw">import</span> { <span class="type">MediaSDK</span> } <span class="kw">from</span> <span class="str">"media-core"</span>;
+
+<span class="kw">const</span> sdk = <span class="kw">new</span> <span class="fn">MediaSDK</span>({ apiKey: <span class="str">"your_key"</span> });</code></pre>
+
+      <h3>Constructor</h3>
+      <table>
+        <thead><tr><th>Option</th><th>Type</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>apiKey</td><td>string</td><td>Your Pexels API key. Never exposed beyond this config call.</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Methods</h3>
+      <table>
+        <thead><tr><th>Method</th><th>Returns</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>search(query, page?, perPage?)</td><td>Promise&lt;any&gt;</td><td>Search photos. Cached by query+page+perPage.</td></tr>
+          <tr><td>curated(page?, perPage?)</td><td>Promise&lt;any&gt;</td><td>Trending/curated photos. Cached.</td></tr>
+          <tr><td>videos.search(query, page?, perPage?)</td><td>Promise&lt;any&gt;</td><td>Search videos.</td></tr>
+          <tr><td>videos.popular(page?, perPage?)</td><td>Promise&lt;any&gt;</td><td>Popular videos.</td></tr>
+          <tr><td>trackView(item)</td><td>void</td><td>Emits a <code>view</code> event.</td></tr>
+          <tr><td>trackDownload(item)</td><td>void</td><td>Emits a <code>download</code> event.</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Caching</h3>
+      <p><code>search()</code> and <code>curated()</code> results are cached in memory. Repeated calls with identical params skip the network entirely.</p>
+    </div>
+
+    <!-- PexelsClient -->
+    <div class="section" id="pexelsclient">
+      <h2>PexelsClient</h2>
+      <p>Low-level API client. Used internally by <code>MediaSDK</code> — you typically don't need to use this directly.</p>
+
+      <pre><code><span class="kw">import</span> { <span class="type">PexelsClient</span> } <span class="kw">from</span> <span class="str">"media-core"</span>;
+
+<span class="kw">const</span> client = <span class="kw">new</span> <span class="fn">PexelsClient</span>(<span class="str">"your_api_key"</span>);</code></pre>
+
+      <table>
+        <thead><tr><th>Method</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>search(query, page?, perPage?)</td><td>Search photos</td></tr>
+          <tr><td>curated(page?, perPage?)</td><td>Curated photos</td></tr>
+          <tr><td>getPhoto(id)</td><td>Single photo by ID</td></tr>
+          <tr><td>videosSearch(query, page?, perPage?)</td><td>Search videos</td></tr>
+          <tr><td>videosPopular(page?, perPage?)</td><td>Popular videos</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Events -->
+    <div class="section" id="events">
+      <h2>Event Emitter</h2>
+      <p>The SDK ships a simple pub/sub emitter. <code>view</code> and <code>download</code> are the built-in event types. A default logger is registered automatically.</p>
+
+      <pre><code><span class="comment">// Default logger fires automatically (no setup needed):</span>
+<span class="comment">// [MEDIA VIEW] { id: 123, ... }</span>
+<span class="comment">// [MEDIA DOWNLOAD] { id: 456, ... }</span>
+
+<span class="comment">// Emit events in your app:</span>
+sdk.<span class="fn">trackView</span>(photo);
+sdk.<span class="fn">trackDownload</span>(photo);
+
+<span class="comment">// Subscribe to events independently:</span>
+sdk.events.<span class="fn">on</span>(<span class="str">"view"</span>, (payload) => {
+  <span class="comment">// send to analytics, etc.</span>
+});
+
+<span class="comment">// Unsubscribe:</span>
+sdk.events.<span class="fn">off</span>(<span class="str">"view"</span>, myListener);</code></pre>
+
+      <h3>MediaEventEmitter API</h3>
+      <table>
+        <thead><tr><th>Method</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>on(event, listener)</td><td>Subscribe to an event</td></tr>
+          <tr><td>off(event, listener)</td><td>Unsubscribe a listener</td></tr>
+          <tr><td>emit(event, payload)</td><td>Fire an event with a payload</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Cache -->
+    <div class="section" id="cache">
+      <h2>MemoryCache</h2>
+      <p>A generic in-memory key-value cache. Used internally by <code>MediaSDK</code>.</p>
+
+      <pre><code><span class="kw">import</span> { <span class="type">MemoryCache</span> } <span class="kw">from</span> <span class="str">"media-core"</span>;
+
+<span class="kw">const</span> cache = <span class="kw">new</span> <span class="fn">MemoryCache</span>&lt;<span class="type">string</span>&gt;();
+cache.<span class="fn">set</span>(<span class="str">"key"</span>, <span class="str">"value"</span>);
+cache.<span class="fn">get</span>(<span class="str">"key"</span>);   <span class="comment">// "value"</span>
+cache.<span class="fn">has</span>(<span class="str">"key"</span>);   <span class="comment">// true</span>
+cache.<span class="fn">delete</span>(<span class="str">"key"</span>);
+cache.<span class="fn">clear</span>();</code></pre>
+    </div>
+
+    <hr />
+
+    <!-- MediaProvider -->
+    <div class="section" id="provider">
+      <h2>MediaProvider</h2>
+      <p>From <code>media-react</code>. Initialises <code>MediaSDK</code> and makes it available to the React tree via context.</p>
+
+      <pre><code><span class="kw">import</span> { <span class="type">MediaProvider</span> } <span class="kw">from</span> <span class="str">"media-react"</span>;
+
+<span class="fn">ReactDOM</span>.<span class="fn">createRoot</span>(document.<span class="fn">getElementById</span>(<span class="str">"root"</span>)!).<span class="fn">render</span>(
+  &lt;<span class="type">MediaProvider</span> apiKey={<span class="fn">import</span>.meta.env.<span class="str">VITE_PEXELS_API_KEY</span>}&gt;
+    &lt;<span class="type">App</span> /&gt;
+  &lt;/<span class="type">MediaProvider</span>&gt;
+);</code></pre>
+
+      <table>
+        <thead><tr><th>Prop</th><th>Type</th><th></th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>apiKey</td><td>string</td><td><span class="req">required</span></td><td>Pexels API key. Read from env var on Vite.</td></tr>
+          <tr><td>children</td><td>ReactNode</td><td><span class="req">required</span></td><td>Your app tree.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- useMedia -->
+    <div class="section" id="usemedia">
+      <h2>useMedia()</h2>
+      <p>Hook that returns the <code>MediaSDK</code> instance. Must be called inside <code>MediaProvider</code>.</p>
+
+      <pre><code><span class="kw">import</span> { <span class="fn">useMedia</span> } <span class="kw">from</span> <span class="str">"media-react"</span>;
+
+<span class="kw">function</span> <span class="fn">MyComponent</span>() {
+  <span class="kw">const</span> sdk = <span class="fn">useMedia</span>();
+
+  <span class="kw">const</span> [photos, setPhotos] = <span class="fn">useState</span>([]);
+
+  <span class="fn">useEffect</span>(() => {
+    sdk.<span class="fn">curated</span>().<span class="fn">then</span>((r) => <span class="fn">setPhotos</span>(r?.photos ?? []));
+  }, []);
+}</code></pre>
+
+      <p>Throws an error if called outside <code>MediaProvider</code> — no null-checking needed.</p>
+    </div>
+
+  </main>
+</div>
+
+</body>
+</html>
