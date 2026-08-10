@@ -227,7 +227,7 @@ import { useMedia } from "media-react";
 import { Grid, Lightbox, Reel } from "media-ui-react";
 
 export default function App() {
-  const sdk = useMedia();
+  const sdk: any = useMedia();
 
   const [images, setImages] = useState<any[]>([]);
   const [videos, setVideos] = useState<any[]>([]);

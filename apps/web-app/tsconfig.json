@@ -9,9 +9,6 @@
     "types": ["vite/client"],
     "baseUrl": ".",
     "ignoreDeprecations": "6.0",
-    "paths": {
-      "media-react": ["../../packages/media-react/src"],
-      "media-ui-react": ["../../packages/media-ui-react/src"]
-    }
+   
   }
 }
