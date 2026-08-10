@@ -114,8 +114,89 @@
 // }
 
 
+// const BASE_URL = "https://api.pexels.com/v1";
+// const VIDEO_URL = "https://api.pexels.com/videos";
+
+// export class PexelsClient {
+//   private readonly apiKey: string;
+
+//   constructor(apiKey: string) {
+//     if (!apiKey) {
+//       throw new Error("Pexels API key is required");
+//     }
+//     this.apiKey = apiKey;
+//   }
+
+//   private async request<T>(endpoint: string): Promise<T> {
+//     const response = await fetch(`${BASE_URL}${endpoint}`, {
+//       headers: {
+//         Authorization: this.apiKey,
+//       },
+//     });
+
+//     if (!response.ok) {
+//       throw new Error(`Pexels API Error: ${response.status}`);
+//     }
+
+//     return response.json() as Promise<T>;
+//   }
+
+//   async search(query: string, page = 1, perPage = 20) {
+//     return this.request(
+//       `/search?query=${encodeURIComponent(query)}&page=${page}&per_page=${perPage}`
+//     );
+//   }
+
+//   async curated(page = 1, perPage = 20) {
+//     return this.request(`/curated?page=${page}&per_page=${perPage}`);
+//   }
+
+//   async getPhoto(id: number) {
+//     return this.request(`/photos/${id}`);
+//   }
+
+//   async videosPopular(page = 1, perPage = 10) {
+//     const data = await this.request<any>(
+//       `/videos/popular?page=${page}&per_page=${perPage}`
+//     );
+//     return {
+//       ...data,
+//       videos: data.videos.map((v: any) => ({
+//         id: v.id,
+//         type: "video",
+//         width: v.width,
+//         height: v.height,
+//         duration: v.duration,
+//         url: v.url,
+//         thumbnailUrl: v.image,
+//         videoUrl: v.video_files?.[0]?.link,
+//       })),
+//     };
+//   }
+
+//   async videosSearch(query: string, page = 1, perPage = 10) {
+//     const data = await this.request<any>(
+//       `${VIDEO_URL}/search?query=${encodeURIComponent(query)}&page=${page}&per_page=${perPage}`
+//     );
+//     return {
+//       ...data,
+//       videos: data.videos.map((v: any) => ({
+//         id: v.id,
+//         type: "video",
+//         width: v.width,
+//         height: v.height,
+//         duration: v.duration,
+//         url: v.url,
+//         thumbnailUrl: v.image,
+//         videoUrl: v.video_files?.[0]?.link,
+//       })),
+//     };
+//   }
+// }
+
+
+
 const BASE_URL = "https://api.pexels.com/v1";
-const VIDEO_URL = "https://api.pexels.com/videos";
 
 export class PexelsClient {
   private readonly apiKey: string;
@@ -127,8 +208,8 @@ export class PexelsClient {
     this.apiKey = apiKey;
   }
 
-  private async request<T>(endpoint: string): Promise<T> {
-    const response = await fetch(`${BASE_URL}${endpoint}`, {
+  private async request<T>(url: string): Promise<T> {
+    const response = await fetch(url, {
       headers: {
         Authorization: this.apiKey,
       },
@@ -143,21 +224,21 @@ export class PexelsClient {
 
   async search(query: string, page = 1, perPage = 20) {
     return this.request(
-      `/search?query=${encodeURIComponent(query)}&page=${page}&per_page=${perPage}`
+      `${BASE_URL}/search?query=${encodeURIComponent(query)}&page=${page}&per_page=${perPage}`
     );
   }
 
   async curated(page = 1, perPage = 20) {
-    return this.request(`/curated?page=${page}&per_page=${perPage}`);
+    return this.request(`${BASE_URL}/curated?page=${page}&per_page=${perPage}`);
   }
 
   async getPhoto(id: number) {
-    return this.request(`/photos/${id}`);
+    return this.request(`${BASE_URL}/photos/${id}`);
   }
 
   async videosPopular(page = 1, perPage = 10) {
     const data = await this.request<any>(
-      `/videos/popular?page=${page}&per_page=${perPage}`
+      `https://api.pexels.com/videos/popular?page=${page}&per_page=${perPage}`
     );
     return {
       ...data,
@@ -176,7 +257,7 @@ export class PexelsClient {
 
   async videosSearch(query: string, page = 1, perPage = 10) {
     const data = await this.request<any>(
-      `${VIDEO_URL}/search?query=${encodeURIComponent(query)}&page=${page}&per_page=${perPage}`
+      `https://api.pexels.com/videos/search?query=${encodeURIComponent(query)}&page=${page}&per_page=${perPage}`
     );
     return {
       ...data,
