@@ -4,3 +4,6 @@ export * from "./reels/ReelSwiper";
 export * from "./grid/Grid";
 export * from "./hooks/useGrid";
 export * from "./reels/Reel";
+export { Grid } from "./grid/Grid";
+export { Lightbox } from "./lightbox/Lightbox";
+export { Reel } from "./reels/Reel";
