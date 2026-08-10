@@ -8,13 +8,13 @@
   ],
   "scripts": {
     "dev": "",
-      "build": "npm run build -w packages/media-core && npm run build -w packages/media-react && npm run build -w packages/media-ui-react && npm run build -w apps/web-app",
+       "build": "npm run build -w packages/media-core && npm run build -w packages/media-react && npm run build -w packages/media-ui-react && npm run build -w apps/web-app",
     "lint": ""
   },
   "devDependencies": {
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
-    "typescript": "^7.0.2"
+     "typescript": "~6.0.2"
   },
   "dependencies": {
     "react": "^19.2.8",
