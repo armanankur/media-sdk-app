@@ -1,7 +1,9 @@
 {
-  "files": [],
-  "references": [
-    { "path": "./tsconfig.app.json" },
-    { "path": "./tsconfig.node.json" }
-  ]
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "media-react": ["../../packages/media-react/src"],
+      "media-ui-react": ["../../packages/media-ui-react/src"]
+    }
+  }
 }
