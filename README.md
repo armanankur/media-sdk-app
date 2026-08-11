@@ -1,4 +1,4 @@
-# Media SDK — 
+# Headless Media SDK
 
 Senior React Developer · Headless Media SDK + Component Library
 
@@ -12,6 +12,29 @@ Senior React Developer · Headless Media SDK + Component Library
 | **SDK Documentation** | https://media-sdk-docs-ten.vercel.app |
 | **Components Documentation** | https://media-sdk-components.vercel.app |
 | **GitHub Repo** | https://github.com/armanankur/media-sdk-app |
+| **Claude AI Conversation** | https://claude.ai/share/your-conversation-link-here |
+
+---
+
+## Screenshots
+
+### Home — Photo Grid
+![Home Grid](./screenshots/01-home-grid.png)
+
+### Search Results
+![Search Results](./screenshots/02-search-results.png)
+
+### Lightbox
+![Lightbox](./screenshots/03-lightbox.png)
+
+### Reels
+![Reels](./screenshots/04-reels.png)
+
+### SDK Documentation
+![SDK Docs](./screenshots/05-sdk-docs.png)
+
+### Components Documentation
+![Components Docs](./screenshots/06-components-docs.png)
 
 ---
 
