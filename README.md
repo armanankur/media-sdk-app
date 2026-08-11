@@ -1,145 +1,198 @@
-# Media SDK — Take-Home Assignment
+# Media SDK — 
 
 Senior React Developer · Headless Media SDK + Component Library
 
-## Live URLs
+---
+
+## Submission Links
 
 | | URL |
 |---|---|
 | **Web App** | https://media-sdk-app-web-app.vercel.app |
+| **SDK Documentation** | https://media-sdk-docs-ten.vercel.app |
+| **Components Documentation** | https://media-sdk-components.vercel.app |
 | **GitHub Repo** | https://github.com/armanankur/media-sdk-app |
+
+---
 
 ## Repo Structure
 
 ```
 media-sdk-app/
 ├── apps/
-│   └── web-app/          # React + Vite app — wires data + UI together
+│   └── web-app/              # React + Vite app — wires data + UI together
 ├── packages/
-│   ├── media-core/       # Framework-agnostic SDK (TypeScript only)
-│   ├── media-react/      # React wrapper around media-core
-│   └── media-ui-react/   # Headless UI component library (React)
+│   ├── media-core/           # Framework-agnostic SDK (TypeScript only)
+│   ├── media-react/          # React wrapper around media-core
+│   └── media-ui-react/       # Headless UI component library (React)
+├── docs/
+│   ├── sdk/                  # SDK documentation site
+│   │   └── index.html
+│   └── components/           # Components documentation site
+│       └── index.html
 ├── skills/
-│   ├── wiring-data.md    # SKILL.md — hooks, provider, auth, events
-│   └── using-components.md # SKILL.md — prop-getters, styling, a11y
-└── README.md
+│   ├── wiring-data.md        # SKILL: hooks, provider, auth, events, pagination
+│   └── using-components.md   # SKILL: prop-getters, render props, styling, a11y
+├── README.md
+└── package.json
 ```
+
+---
 
 ## Architecture
 
-Dependency direction is strictly enforced:
+Dependency direction is strictly enforced across all packages:
 
 ```
-app → media-react → media-core
+app → media-react  → media-core
 app → media-ui-react
 
-media-ui-react does NOT import media-core or media-react
-media-react does NOT import media-ui-react
-media-core has zero UI/React imports
+media-ui-react  ✗  does NOT import media-core or media-react
+media-react     ✗  does NOT import media-ui-react
+media-core      ✗  has zero React / DOM imports
 ```
+
+This means:
+- `media-core` is fully portable — could power a CLI, Node script, or any other UI framework with zero changes
+- `media-ui-react` components are data-source agnostic — they accept anything via props and have no knowledge of Pexels or the SDK
+- The app (`web-app`) is the only place that imports from both sides and wires them together
+
+---
 
 ## Package Overview
 
 ### `media-core` — Framework-agnostic SDK
 
-- `PexelsClient` — typed API client: search, curated, single photo, videos popular/search, pagination
-- `MediaSDK` — top-level class that wires client + cache + events; exposes `search()`, `curated()`, `videos.search()`, `videos.popular()`, `trackView()`, `trackDownload()`
-- `MemoryCache` — simple in-memory cache keyed by request params; used inside `MediaSDK` for search and curated results
-- `MediaEventEmitter` — pub/sub emitter for `view` and `download` events with `on()`, `off()`, `emit()`
-- `createDefaultLogger` — default listener that logs all events to console; called automatically in `MediaSDK` constructor
+Pure TypeScript. No React, no DOM, no framework dependencies.
+
+| Export | Description |
+|---|---|
+| `MediaSDK` | Top-level class. Wires client + cache + events. Entry point for all SDK usage. |
+| `PexelsClient` | Typed API client — search, curated, single photo, video search, video popular, pagination |
+| `MemoryCache` | Generic in-memory key-value cache. Used internally by `MediaSDK`. |
+| `MediaEventEmitter` | Pub/sub emitter for `view` and `download` events — `on()`, `off()`, `emit()` |
+| `createDefaultLogger` | Registers a console logger for all events. Called automatically in `MediaSDK` constructor. |
+
+`MediaSDK` caches `search()` and `curated()` results automatically, keyed by `query:page:perPage`. Repeated identical calls skip the network.
 
 ### `media-react` — React Wrapper
 
-- `MediaProvider` — initialises `MediaSDK` with API key, exposes via context
-- `useMedia()` — hook to access the SDK instance anywhere in the tree
+Thin adapter — no business logic.
 
-No business logic lives here — it only adapts `media-core` to React idioms.
+| Export | Description |
+|---|---|
+| `MediaProvider` | Initialises `MediaSDK` with an API key and exposes it via React context |
+| `useMedia()` | Hook that returns the `MediaSDK` instance. Throws if used outside `MediaProvider`. |
 
-### `media-ui-react` — Headless UI Components
+### `media-ui-react` — Headless UI Component Library
 
-- `Grid` — renders items in a responsive grid with load-more pagination. Accepts `items` and `renderItem` — no opinions on markup or styles.
-- `Lightbox` — full-screen overlay with prev/next navigation, close, and download. Portal-based, keyboard-friendly.
-- `ReelSwiper` — vertical snap-scroll reel with active-item detection and autoplay for the active video.
+Zero styles, zero SDK imports. Components handle behaviour only — you own all markup and CSS.
 
-Components are **independent of `media-core` and `media-react`** — they receive data and callbacks purely as props.
+| Component | Behaviour |
+|---|---|
+| `Grid` | Paginated grid with load-more. Generic — works with any item shape. Exposes `renderItem`, `renderContainer`, `renderLoadMore`, and prop-getters for a11y. |
+| `Lightbox` | Full-screen image overlay. Prev/next navigation, keyboard shortcuts (Escape, Arrow keys), portal rendering, inline blob download. All 6 elements overridable via render props. |
+| `ReelSwiper` | Vertical snap-scroll video reel. Active-item detection via scroll position. Only the active video autoplays. |
+
+Components receive data and callbacks purely as props — they have no knowledge of Pexels or `media-core`.
 
 ### `apps/web-app` — UI App
 
-The only place that imports both `media-react` (for data) and `media-ui-react` (for display):
+The only place that imports both `media-react` (data) and `media-ui-react` (display) and connects them:
 
 - Search bar with 500ms debounce
-- Grid of photos with infinite scroll
-- Lightbox on photo click (emits `view` event)
-- Download button in Lightbox (emits `download` event)
+- Photo grid with infinite scroll (IntersectionObserver)
+- Lightbox on photo click → emits `view` event via `sdk.trackView()`
+- Download button in Lightbox → emits `download` event via `sdk.trackDownload()`
 - Reels section for video results
+
+---
 
 ## Event System
 
 ```ts
-// Events fire automatically via MediaSDK methods:
-sdk.trackView(item);     // called on lightbox open
-sdk.trackDownload(item); // called on download click
+// Emit events from the app layer — not inside UI components
+sdk.trackView(photo);     // called when lightbox opens
+sdk.trackDownload(photo); // called when user downloads
 
-// Default logger (auto-registered in MediaSDK constructor):
-// [MEDIA VIEW] { id: 123, ... }
-// [MEDIA DOWNLOAD] { id: 123, ... }
+// Default logger fires automatically (no setup needed):
+// [MEDIA VIEW]     { id: 123, src: {...}, photographer: "..." }
+// [MEDIA DOWNLOAD] { id: 456, src: {...}, photographer: "..." }
 
-// App can also subscribe independently:
+// Subscribe independently for custom analytics:
 sdk.events.on("view", (payload) => {
-  // custom analytics, etc.
+  myAnalytics.track("photo_viewed", payload);
 });
+
+// Always clean up subscriptions:
+sdk.events.off("view", myListener);
 ```
 
-## Caching
+---
 
-`MediaSDK` caches search and curated results in memory keyed by `query:page:perPage`. Repeated calls with the same params skip the network entirely.
+## AI Skill Docs
+
+Two `SKILL.md` documents in `/skills` teach an AI coding assistant how to
+correctly consume this SDK when building UI. They were used to steer Claude
+while building `App.tsx`.
+
+| File | Covers |
+|---|---|
+| `skills/wiring-data.md` | Provider setup, `useMedia()`, fetching photos/videos, unified fetch pattern, debounced search, infinite scroll, event tracking, caching |
+| `skills/using-components.md` | Headless contract, Grid prop-getters, Lightbox render props, ReelSwiper requirements, full wiring example, common mistakes |
+
+---
 
 ## AI Usage
 
-This project was built with Claude (Anthropic) as the primary AI coding assistant.
+This project was built with **Claude (Anthropic)** as the primary AI coding assistant.
 
-| Area | AI-assisted | Hand-written |
+| Area | AI-assisted | Hand-written / Fixed |
 |---|---|---|
-| Monorepo setup, tsconfig, package.json | ✅ AI — debugging build errors | — |
-| `PexelsClient` API methods | ✅ AI — initial structure | ✅ Bug fixes (URL doubling) |
+| Monorepo setup, tsconfig, package.json | ✅ AI | ✅ Debugged TypeScript version conflicts (`^7.0.2` → `~6.0.2`) |
+| `PexelsClient` API methods | ✅ AI — initial structure | ✅ Fixed doubled URL bug in `videosSearch` |
 | `MemoryCache` | ✅ AI | — |
 | `MediaEventEmitter` | ✅ AI | — |
-| `MediaSDK` wiring | ✅ AI | — |
+| `MediaSDK` wiring | ✅ AI | ✅ Fixed wrong import paths (`./events/emitter` → `./emitter/emitter`) |
 | `MediaProvider` + `useMedia` | ✅ AI | — |
-| `Grid` component | ✅ AI | — |
-| `Lightbox` component | ✅ AI | — |
+| `Grid` component | ✅ AI | ✅ Refactored to headless prop-getter pattern |
+| `Lightbox` component | ✅ AI | ✅ Refactored to render props; fixed invisible lightbox bug |
 | `ReelSwiper` component | ✅ AI | — |
-| `App.tsx` — infinite scroll, debounce logic | ✅ AI | ✅ State bug fixes |
-| `skills/*.md` | ✅ AI-drafted | ✅ Hand-tested against actual build |
-| Vercel deployment config | ✅ AI | — |
+| `App.tsx` — fetch, debounce, infinite scroll | ✅ AI | ✅ Fixed stale closure bug, double fetch on mount, event wiring |
+| `skills/*.md` | ✅ AI-drafted | ✅ Hand-tested against the actual build; updated after every bug found |
+| SDK + Components docs sites | ✅ AI | — |
+| Vercel deployment config | ✅ AI | ✅ Fixed root directory, output path, install command |
 
-The two `SKILL.md` files in `/skills` were used to steer Claude while building `App.tsx` — specifically the provider setup, hook usage, and component wiring sections.
+---
 
 ## What Was Scoped Out
 
 | Item | Reason |
 |---|---|
-| `media-native` (React Native wrapper) | Out of scope for web-only assignment window |
-| `media-ui-native` | Same — no RN environment available |
-| SDK docs site | Not built; README covers the API surface |
-| Components docs site | Not built; inline JSDoc covers props |
-| Keyboard trap in Lightbox | Partial — Escape key not yet wired |
+| `media-native` (React Native wrapper) | Out of scope — web-only assignment, no RN environment |
+| `media-ui-native` | Same as above |
+| Keyboard focus trap in Lightbox | Partial — Escape / Arrow keys work; full focus trap not implemented |
+| Typed API responses | `any` used in several places; full Pexels response types not defined |
+
+---
 
 ## Local Development
 
 ```bash
-# Install all workspace deps from root
+# 1. Install all workspace dependencies from repo root
 npm install
 
-# Build all packages in order
+# 2. Build all packages in dependency order
 npm run build
 
-# Run the web app
+# 3. Run the web app
 cd apps/web-app && npm run dev
 ```
 
-Add a `.env` file in `apps/web-app/`:
+Create `apps/web-app/.env`:
 
 ```
-VITE_PEXELS_API_KEY=your_key_here
+VITE_PEXELS_API_KEY=your_pexels_api_key_here
 ```
+
+Get a free API key at [pexels.com/api](https://www.pexels.com/api/).

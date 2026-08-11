@@ -1,92 +1,236 @@
-# SKILL: Using media-ui-react Components
+# Using `media-ui-react` Components
 
-Use this skill when wiring `media-ui-react` components into any React app.
-It covers the Grid, Lightbox, and ReelSwiper — their props, styling contract,
-accessibility, and correct usage patterns.
-
----
-
-## Key Rule: Components Are Headless
-
-`media-ui-react` components ship **zero styles**. They handle behaviour and
-structure only. You supply all CSS — either inline styles, CSS modules, Tailwind,
-or any other approach. Never expect built-in visual polish.
+> **When to use this skill:** Any time you render a `Grid`, `Lightbox`, or
+> `ReelSwiper` from `media-ui-react` — wiring props, applying styles, handling
+> accessibility, or connecting SDK events to UI actions.
 
 ---
 
-## 1. Grid
+## Table of Contents
 
-Renders a list of items in a grid with built-in load-more pagination.
+1. [The Headless Contract](#1-the-headless-contract)
+2. [Grid](#2-grid)
+3. [Lightbox](#3-lightbox)
+4. [ReelSwiper](#4-reelswiper-reel)
+5. [Full Wiring Example](#5-full-wiring-example)
+6. [Common Mistakes](#6-common-mistakes)
+
+---
+
+## 1. The Headless Contract
+
+`media-ui-react` ships **zero styles and zero SDK imports**. Every component:
+
+- Handles **behaviour only** — pagination, navigation, keyboard events, scroll detection, video autoplay
+- Accepts data and callbacks **purely as props** — no knowledge of Pexels or `media-core`
+- Exposes **prop-getter functions** that return the correct event handlers and ARIA attributes
+- Allows **full markup override** via `render*` props
+
+```
+media-ui-react ──────────────────────────────────────────────┐
+│  Grid        → behaviour: pagination, load-more            │
+│  Lightbox    → behaviour: navigation, keyboard, download   │
+│  ReelSwiper  → behaviour: snap scroll, active-item detect  │
+└────────────────────────────────────────────────────────────┘
+        ▲ no imports from media-core or media-react
+        ▲ you own all markup and CSS
+```
+
+**Always spread prop-getters** onto your elements — they carry ARIA attributes,
+event handlers, and roles:
+
+```tsx
+// ✅ correct — a11y attributes included
+<div {...getItemProps(index)} className="my-card">...</div>
+
+// ❌ wrong — loses role, aria-*, and key
+<div key={index} className="my-card">...</div>
+```
+
+---
+
+## 2. Grid
+
+A generic, paginated grid with a load-more control. No layout opinions.
+
+### Basic Usage
 
 ```tsx
 import { Grid } from "media-ui-react";
 
 <Grid
   items={photos}
-  renderItem={(photo) => (
-    <img
-      src={photo.src.medium}
-      alt={photo.alt}
-      onClick={() => openLightbox(photo)}
-      style={{ width: "100%", borderRadius: 8, cursor: "pointer" }}
-    />
+  renderItem={(photo, getItemProps) => (
+    <div {...getItemProps()} className="photo-card">
+      <img
+        src={photo.src.medium}
+        alt={photo.alt}
+        onClick={() => handleOpenLightbox(photos.indexOf(photo))}
+      />
+    </div>
+  )}
+/>
+```
+
+### With Full Markup Control
+
+```tsx
+<Grid
+  items={photos}
+  pageSize={12}
+  renderContainer={(props, children) => (
+    <ul {...props} className="photo-grid">
+      {children}
+    </ul>
+  )}
+  renderItem={(photo, getItemProps) => (
+    <li {...getItemProps()} className="photo-card">
+      <img src={photo.src.medium} alt={photo.alt} onClick={...} />
+    </li>
+  )}
+  renderLoadMore={(props) => (
+    <button {...props} className="load-more-btn">
+      Load More
+    </button>
   )}
 />
 ```
 
 ### Props
 
-| Prop | Type | Required | Description |
-|---|---|---|---|
-| `items` | `T[]` | ✅ | Array of any item type |
-| `renderItem` | `(item: T) => ReactNode` | ✅ | Render function — you control the markup |
+| Prop | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `items` | `T[]` | ✅ | — | Any array — fully generic |
+| `renderItem` | `(item, getItemProps) => ReactNode` | ✅ | — | Render each visible item |
+| `pageSize` | `number` | ❌ | `12` | Items shown per page |
+| `renderContainer` | `(props, children) => ReactNode` | ❌ | `<div>` | Override the grid wrapper |
+| `renderLoadMore` | `(props) => ReactNode` | ❌ | `<button>` | Override the load-more control |
 
-### Behaviour
-- Shows items in pages of 12 by default
-- Renders a "Load More" button when more items exist
-- `renderItem` is called for each visible item — generic, works with any data shape
+### Prop Getters
 
-### Styling the grid layout
-The Grid renders a wrapping `<div>` — style it via `renderItem`'s container or
-wrap `<Grid>` in your own div:
+| Getter | Returns |
+|---|---|
+| `getContainerProps()` | `role="list"` |
+| `getItemProps(index)` | `role="listitem"`, `key` |
+| `getLoadMoreProps()` | `onClick`, `aria-label="Load more items"`, `type="button"` |
 
-```tsx
-<div className="my-grid-wrapper">
-  <Grid items={items} renderItem={...} />
-</div>
-```
+### Styling Reference
 
 ```css
-.my-grid-wrapper > div {
+.photo-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 16px;
+  list-style: none;
+  padding: 0;
+}
+
+.photo-card img {
+  width: 100%;
+  border-radius: 10px;
+  cursor: pointer;
+  display: block;
+  transition: opacity 0.2s;
+}
+
+.photo-card img:hover { opacity: 0.85; }
+
+.load-more-btn {
+  display: block;
+  margin: 32px auto 0;
+  padding: 10px 28px;
+  border-radius: 8px;
+  cursor: pointer;
 }
 ```
 
 ---
 
-## 2. Lightbox
+## 3. Lightbox
 
-Full-screen overlay for viewing a list of images with prev/next navigation
-and an optional download action.
+Full-screen image overlay with prev/next navigation, keyboard shortcuts,
+portal rendering, and inline download. All six visual elements are
+overridable via render props.
+
+### ⚠️ Critical Rule
+
+`Lightbox` ships **no styles** — without `renderOverlay`, it renders as
+invisible unstyled elements. You **must** pass `renderOverlay` with at minimum
+`position: fixed`, a background, and a `zIndex`.
+
+### Usage
 
 ```tsx
 import { Lightbox } from "media-ui-react";
 
 const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 
-// Open
-<img onClick={() => setSelectedIndex(index)} ... />
+// Open lightbox — emit view event here, not inside the component
+const handleOpenLightbox = (index: number) => {
+  setSelectedIndex(index);
+  sdk.trackView(images[index]);
+};
 
-// Lightbox
+// Download callback — emit download event here, not inside the component
+const handleDownload = (item: any) => {
+  sdk.trackDownload(item);
+};
+
 {selectedIndex !== null && (
   <Lightbox
-    items={photos.map((p) => ({ id: p.id, imageUrl: p.src.large }))}
+    items={images.map((p) => ({ id: p.id, imageUrl: p.src?.large }))}
     selectedIndex={selectedIndex}
     isOpen={true}
     onClose={() => setSelectedIndex(null)}
-    onDownload={(item) => sdk.trackDownload(item)}
+    onDownload={handleDownload}
+
+    // Required for visibility
+    renderOverlay={(props, children) => (
+      <div
+        {...props}
+        style={{
+          position: "fixed",
+          inset: 0,
+          background: "rgba(0,0,0,0.9)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 99999,
+        }}
+      >
+        {children}
+      </div>
+    )}
+
+    renderImage={(props, item) => (
+      <img
+        {...props}
+        src={item.imageUrl}
+        alt=""
+        style={{
+          maxWidth: "90vw",
+          maxHeight: "90vh",
+          objectFit: "contain",
+          borderRadius: 12,
+        }}
+      />
+    )}
+
+    renderPrevButton={(props) => (
+      <button {...props} className="lb-btn lb-prev">◀</button>
+    )}
+
+    renderNextButton={(props) => (
+      <button {...props} className="lb-btn lb-next">▶</button>
+    )}
+
+    renderCloseButton={(props) => (
+      <button {...props} className="lb-btn lb-close">✕</button>
+    )}
+
+    renderDownloadButton={(props) => (
+      <button {...props} className="lb-btn lb-download">Download</button>
+    )}
   />
 )}
 ```
@@ -95,48 +239,84 @@ const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 
 | Prop | Type | Required | Description |
 |---|---|---|---|
-| `items` | `{ id: number; imageUrl: string }[]` | ✅ | Flat array of lightbox items |
-| `selectedIndex` | `number` | ✅ | Index of the initially selected item |
-| `isOpen` | `boolean` | ✅ | Controls visibility |
-| `onClose` | `() => void` | ✅ | Called when overlay or close button is clicked |
-| `onDownload` | `(item) => void` | ❌ | Called after download completes |
+| `items` | `{ id: number; imageUrl: string }[]` | ✅ | Map `photo.src.large` — not the full `src` object |
+| `selectedIndex` | `number` | ✅ | Initially active item index |
+| `isOpen` | `boolean` | ✅ | Controls visibility — render conditionally |
+| `onClose` | `() => void` | ✅ | Called on backdrop click or close button |
+| `onDownload` | `(item) => void` | ❌ | Called after blob download completes |
+| `renderOverlay` | `(props, children) => ReactNode` | ❌ | Backdrop — must spread `{...props}` and render `{children}` |
+| `renderImage` | `(props, item) => ReactNode` | ❌ | Image element |
+| `renderPrevButton` | `(props) => ReactNode` | ❌ | Previous button |
+| `renderNextButton` | `(props) => ReactNode` | ❌ | Next button |
+| `renderCloseButton` | `(props) => ReactNode` | ❌ | Close button |
+| `renderDownloadButton` | `(props) => ReactNode` | ❌ | Download button — blob fetch is handled internally |
 
-### Behaviour
-- Renders via `createPortal` into `document.body` — always on top
-- Prev/Next buttons cycle through `items`
-- Download fetches the image as a blob and triggers browser download
-- Clicking the backdrop closes the lightbox
+### Prop Getters (from `useLightbox`)
 
-### Accessibility
-- Add `aria-label` to your open trigger: `<button aria-label="View photo">`
-- Lightbox backdrop has `onClick={onClose}` — keyboard users need an explicit close button (already included as ✕)
-- For full keyboard trap support, add `onKeyDown` to the portal div:
+| Getter | Returns |
+|---|---|
+| `getOverlayProps()` | `role="dialog"`, `aria-modal=true`, `aria-label`, `onClick` → close |
+| `getImageProps()` | `role="img"`, `onClick` → stop propagation |
+| `getPrevButtonProps()` | `onClick` → prev, `aria-label="Previous image"`, `type="button"` |
+| `getNextButtonProps()` | `onClick` → next, `aria-label="Next image"`, `type="button"` |
+| `getCloseButtonProps()` | `onClick` → close, `aria-label="Close lightbox"`, `type="button"` |
+| `getDownloadButtonProps(cb, item)` | Handles blob fetch + save dialog + fires `cb(item)` |
 
-```tsx
-// Extend Lightbox usage with keyboard support in the app:
-useEffect(() => {
-  if (selectedIndex === null) return;
-  const handler = (e: KeyboardEvent) => {
-    if (e.key === "Escape") setSelectedIndex(null);
-  };
-  window.addEventListener("keydown", handler);
-  return () => window.removeEventListener("keydown", handler);
-}, [selectedIndex]);
+### Keyboard Support
+
+Built into `useLightbox` — no additional setup required:
+
+| Key | Action |
+|---|---|
+| `Escape` | Close lightbox |
+| `ArrowRight` | Next image |
+| `ArrowLeft` | Previous image |
+
+### Behaviour Notes
+
+- Renders into `document.body` via `createPortal` — always above other content
+- Prev/Next navigation wraps around (last → first, first → last)
+- Download fetches the image as a Blob and triggers the browser's save dialog
+- Event tracking (`trackView`, `trackDownload`) belongs in the **app**, not inside this component
+
+### Button Positioning Reference
+
+```css
+.lb-btn {
+  position: absolute;
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: rgba(255, 255, 255, 0.9);
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background 0.2s;
+}
+
+.lb-btn:hover    { background: rgba(255, 255, 255, 0.25); }
+.lb-prev         { left: 20px; top: 50%; transform: translateY(-50%); }
+.lb-next         { right: 20px; top: 50%; transform: translateY(-50%); }
+.lb-close        { top: 20px; right: 20px; }
+.lb-download     { bottom: 20px; left: 50%; transform: translateX(-50%); font-size: 14px; }
 ```
 
 ---
 
-## 3. ReelSwiper (Reel)
+## 4. ReelSwiper (`Reel`)
 
-Vertical snap-scroll video reel. Each item takes full viewport height.
-The active video autoplays; others are paused.
+Vertical snap-scroll video reel. One video per full viewport height.
+The active video autoplays; all others are paused.
+
+### Usage
 
 ```tsx
 import { Reel } from "media-ui-react";
 
 const reelItems = videos.map((v) => ({
   id: v.id,
-  videoUrl: v.videoUrl,
+  videoUrl: v.videoUrl?.replace(/[[\]]/g, ""), // sanitise before passing
 }));
 
 <Reel items={reelItems} />
@@ -146,39 +326,37 @@ const reelItems = videos.map((v) => ({
 
 | Prop | Type | Required | Description |
 |---|---|---|---|
-| `items` | `{ id: number; videoUrl: string }[]` | ✅ | Video items to display |
+| `items` | `{ id: number; videoUrl: string }[]` | ✅ | Video items. Always sanitise `videoUrl` first. |
 
 ### Behaviour
-- Each item snaps to full viewport height on scroll (`scroll-snap-type: y mandatory`)
-- Active index is tracked via scroll position
-- Only the active item has `autoPlay` — others are paused
-- Videos are `muted`, `loop`, `playsInline` by default (required for autoplay in browsers)
 
-### Styling
-Reel takes `height: 100vh` — make sure its parent doesn't constrain height:
+- Snap scrolls vertically — each item fills `100vh` (`scroll-snap-type: y mandatory`)
+- Active index tracked via `scrollTop / window.innerHeight`
+- Only the active video has `autoPlay` — others stop immediately on scroll
+- All videos use `muted`, `loop`, `playsInline` — required for browser autoplay policy
+
+### Container Requirements
+
+The Reel is `height: 100vh`. Its parent must not clip or constrain it:
 
 ```tsx
-// ✅ correct
-<section style={{ height: "100vh", overflow: "hidden" }}>
+// ✅ correct — parent doesn't constrain height
+<section>
   <Reel items={reelItems} />
 </section>
 
-// ❌ wrong — parent clips the scroll
+// ❌ wrong — fixed height and overflow clip the scroll
 <div style={{ height: 400, overflow: "hidden" }}>
   <Reel items={reelItems} />
 </div>
 ```
 
-### Video URL Gotcha
-Pexels video URLs sometimes contain encoded brackets. Clean them before passing:
-
-```ts
-videoUrl: v.videoUrl?.replace(/[[\]]/g, "")
-```
-
 ---
 
-## 4. Wiring Data + Components Together (Full Pattern)
+## 5. Full Wiring Example
+
+The complete pattern — Grid + Lightbox + Reel with SDK events, headless
+styling, and proper event placement:
 
 ```tsx
 import { useMedia } from "media-react";
@@ -186,67 +364,122 @@ import { Grid, Lightbox, Reel } from "media-ui-react";
 
 export default function App() {
   const sdk = useMedia();
-  const [photos, setPhotos] = useState([]);
-  const [videos, setVideos] = useState([]);
-  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+
+  const [images, setImages]         = useState<any[]>([]);
+  const [videos, setVideos]         = useState<any[]>([]);
+  const [selectedIndex, setSelected] = useState<number | null>(null);
 
   useEffect(() => {
-    sdk.curated().then((r) => setPhotos(r?.photos ?? []));
-    sdk.videos.popular().then((r) => setVideos(r?.videos ?? []));
+    Promise.all([sdk.curated(), sdk.videos.popular()]).then(([p, v]) => {
+      setImages(p?.photos ?? []);
+      setVideos(v?.videos ?? []);
+    });
   }, []);
 
-  const handleOpen = (index: number) => {
-    setSelectedIndex(index);
-    sdk.trackView(photos[index]); // emit view event
+  // ✅ trackView fired in the app — not inside the component
+  const handleOpenLightbox = (index: number) => {
+    setSelected(index);
+    sdk.trackView(images[index]);
   };
 
+  // ✅ trackDownload fired in the app — passed as onDownload callback
   const handleDownload = (item: any) => {
-    sdk.trackDownload(item); // emit download event
+    sdk.trackDownload(item);
   };
 
   return (
-    <>
+    <div style={{ padding: 20 }}>
+
+      {/* ── Grid ────────────────────────────────────── */}
       <Grid
-        items={photos}
-        renderItem={(photo: any) => (
-          <img
-            src={photo.src.medium}
-            onClick={() => handleOpen(photos.indexOf(photo))}
-            style={{ width: "100%", cursor: "pointer" }}
-          />
+        items={images}
+        renderContainer={(props, children) => (
+          <div {...props} className="photo-grid">{children}</div>
+        )}
+        renderItem={(photo: any, getItemProps) => (
+          <div {...getItemProps()} className="photo-card">
+            <img
+              src={photo.src?.medium}
+              alt={photo.alt}
+              onClick={() => handleOpenLightbox(images.indexOf(photo))}
+            />
+          </div>
+        )}
+        renderLoadMore={(props) => (
+          <button {...props} className="load-more-btn">Load More</button>
         )}
       />
 
+      {/* ── Lightbox ─────────────────────────────────── */}
       {selectedIndex !== null && (
         <Lightbox
-          items={photos.map((p: any) => ({ id: p.id, imageUrl: p.src.large }))}
+          items={images.map((p: any) => ({ id: p.id, imageUrl: p.src?.large }))}
           selectedIndex={selectedIndex}
           isOpen={true}
-          onClose={() => setSelectedIndex(null)}
+          onClose={() => setSelected(null)}
           onDownload={handleDownload}
+          renderOverlay={(props, children) => (
+            <div
+              {...props}
+              style={{
+                position: "fixed", inset: 0,
+                background: "rgba(0,0,0,0.9)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                zIndex: 99999,
+              }}
+            >
+              {children}
+            </div>
+          )}
+          renderImage={(props, item) => (
+            <img
+              {...props}
+              src={item.imageUrl}
+              style={{ maxWidth: "90vw", maxHeight: "90vh", objectFit: "contain", borderRadius: 12 }}
+            />
+          )}
+          renderPrevButton={(props) => (
+            <button {...props} className="lb-btn lb-prev">◀</button>
+          )}
+          renderNextButton={(props) => (
+            <button {...props} className="lb-btn lb-next">▶</button>
+          )}
+          renderCloseButton={(props) => (
+            <button {...props} className="lb-btn lb-close">✕</button>
+          )}
+          renderDownloadButton={(props) => (
+            <button {...props} className="lb-btn lb-download">Download</button>
+          )}
         />
       )}
 
+      {/* ── Reels ────────────────────────────────────── */}
       <Reel
         items={videos.map((v: any) => ({
           id: v.id,
           videoUrl: v.videoUrl?.replace(/[[\]]/g, ""),
         }))}
       />
-    </>
+
+    </div>
   );
 }
 ```
 
 ---
 
-## Common Mistakes
+## 6. Common Mistakes
 
-| Mistake | Fix |
+| ❌ Mistake | ✅ Fix |
 |---|---|
-| Passing `src` object directly to Lightbox `imageUrl` | Map to a specific size: `photo.src.large` |
-| Reel not scrolling | Parent has `overflow: hidden` or fixed height less than `100vh` |
-| Video not autoplaying | Missing `muted` — browsers block unmuted autoplay |
-| Lightbox not closing on Escape | Add `keydown` listener in the app (see Accessibility section) |
-| Grid items have no spacing | Grid is unstyled — add your own `gap` via wrapper CSS |
-| `onDownload` not firing | Check that you passed the prop; it's optional so no error if missing |
+| Lightbox opens but nothing is visible | Pass `renderOverlay` with `position: fixed`, a background colour, and `zIndex` |
+| Passing `photo.src` directly to `imageUrl` | Map to a specific size string: `photo.src?.large` |
+| Not spreading prop-getters | Always spread: `{...getItemProps()}`, `{...getOverlayProps()}` |
+| Forgetting `{children}` inside `renderOverlay` | The overlay must render its children or nothing shows inside it |
+| `sdk.trackView()` called inside Lightbox | Call it in `handleOpenLightbox` in the app — UI components don't import the SDK |
+| `sdk.trackDownload()` called inside Lightbox | Pass `handleDownload` as the `onDownload` prop instead |
+| Reel not snapping or scrolling | Parent element has `overflow: hidden` or a fixed height smaller than `100vh` |
+| Videos not autoplaying in Reel | Browser requires `muted` for autoplay — it's set by the component, check your container isn't hiding the element |
+| Grid items have no gap or layout | Grid ships no CSS — add your own grid layout to the container via `renderContainer` |
+| Video playback fails with a URL error | Sanitise before passing: `v.videoUrl?.replace(/[[\]]/g, "")` |
+| `onDownload` never fires | It's optional — no error if omitted. Confirm you actually passed the prop. |
