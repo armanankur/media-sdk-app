@@ -332,10 +332,24 @@ export default function App() {
 
   return (
     <div style={{ padding: 20 }}>
-      <h2>Media SDK</h2>
+      <h2
+  style={{
+    display: "flex",
+    justifyContent:"center",
+    alignItems: "center",
+    margin: "0 0 24px",
+    fontSize: "32px",
+    fontWeight: 700,
+    lineHeight: 1.2,
+    letterSpacing: "-0.8px",
+    color: "#111827",
+  }}
+>
+  Headless Media SDK
+</h2>
 
       {/* SEARCH */}
-      <div
+      {/* <div
         style={{
           display: "flex",
           alignItems: "center",
@@ -368,7 +382,120 @@ export default function App() {
             letterSpacing: "0.2px",
           }}
         />
-      </div>
+      </div> */}
+
+
+      {/* SEARCH */}
+<div
+  style={{
+    display: "flex",
+    justifyItems: "center",
+    alignItems: "center",
+    gap: "12px",
+    width: "auto",
+    padding: "13px 16px",
+    borderRadius: "16px",
+
+    background:
+      "linear-gradient(135deg, rgba(255,255,255,0.98), rgba(248,250,252,0.96))",
+
+    border: "1px solid rgba(148,163,184,0.22)",
+
+    boxShadow:
+      "0 10px 30px rgba(15,23,42,0.07), 0 2px 8px rgba(15,23,42,0.04)",
+
+    backdropFilter: "blur(14px)",
+    WebkitBackdropFilter: "blur(14px)",
+
+    transition: "all 0.25s ease",
+  }}
+>
+  {/* SEARCH ICON */}
+  <span
+    style={{
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      width: "34px",
+      height: "34px",
+      flexShrink: 0,
+      borderRadius: "10px",
+      background: "linear-gradient(135deg, #eef2ff, #e0e7ff)",
+      color: "#6366f1",
+    }}
+  >
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <circle cx="11" cy="11" r="7" />
+      <path d="m20 20-3.5-3.5" />
+    </svg>
+  </span>
+
+  {/* INPUT */}
+  <input
+    type="text"
+    placeholder="Search images & videos..."
+    value={query}
+    onChange={(e) => setQuery(e.target.value)}
+    style={{
+      flex: 1,
+      minWidth: 0,
+
+      background: "transparent",
+      border: "none",
+      outline: "none",
+
+      color: "#0f172a",
+      fontSize: "15px",
+      fontWeight: 500,
+      lineHeight: "24px",
+
+      caretColor: "#6366f1",
+      fontFamily: "inherit",
+      letterSpacing: "0.1px",
+    }}
+  />
+
+  {/* CLEAR BUTTON */}
+  {query && (
+    <button
+      type="button"
+      onClick={() => setQuery("")}
+      aria-label="Clear search"
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+
+        width: "30px",
+        height: "30px",
+        flexShrink: 0,
+
+        border: "none",
+        borderRadius: "9px",
+
+        background: "#f1f5f9",
+        color: "#64748b",
+
+        cursor: "pointer",
+        fontSize: "18px",
+        lineHeight: 1,
+
+        transition: "all 0.2s ease",
+      }}
+    >
+      ×
+    </button>
+  )}
+</div>
 
       {loading && page === 1 && <p>Loading...</p>}
 
